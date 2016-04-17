@@ -4,6 +4,22 @@ import java.io.Serializable;
 
 public class BankImpl implements Bank, Serializable{
 
+    /** Accounts counter */
+    private int accountsID;
+
+    /**
+      * Accounts
+      * Map<Id, Accounts>
+     */
+
+    /** Operation counter */
+    private int operationID;
+
+    /**
+      * Moves
+      * Map<Id, Operation>
+     */
+
     float balance = 0;
 
     public synchronized boolean move(float value) {
@@ -19,6 +35,16 @@ public class BankImpl implements Bank, Serializable{
             return false;
         }
         return true;
+    }
+
+    @Override
+    public boolean transfer(int dest, int amount) {
+        return false;
+    }
+
+    @Override
+    public boolean movements(int n) {
+        return false;
     }
 
     public synchronized float getBalance() {

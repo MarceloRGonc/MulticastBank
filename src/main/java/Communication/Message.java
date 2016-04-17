@@ -4,12 +4,26 @@ import java.io.Serializable;
 
 public abstract class Message implements Serializable {
 
-    public enum Type { MOVE, BALANCE, LEAVE, STATE }
+    public enum Type {
+
+        /** Operations */
+        MOVE,
+        MOVEMENTS,
+        TRANSFER,
+        BALANCE,
+
+        /** State transfer */
+        ASKSTATE,
+        SENDSTATE,
+
+        /** User options */
+        REGISTER,
+        LOGIN,
+        LEAVE
+    }
 
     public abstract Type getType();
 
-    public abstract float getAmount();
-
-    public abstract boolean getResponse();
+    public abstract String getVMID();
 
 }

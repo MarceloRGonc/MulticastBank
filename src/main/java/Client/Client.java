@@ -25,7 +25,7 @@ public class Client {
     public static void main(String[] args) {
         try {
 
-            BankStub bank = new BankStub();
+            BankStub bank = new BankStub(0);
 
             brConsole = new BufferedReader(new InputStreamReader(System.in));
             bwConsole = new BufferedWriter(new OutputStreamWriter(System.out));

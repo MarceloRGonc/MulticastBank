@@ -2,8 +2,12 @@ package Bank;
 
 public interface Bank {
 
-    public float getBalance();
+    float getBalance();
 
-    public boolean move(float value);
+    boolean move(float value);
+
+    boolean transfer(int dest, int amount);
+
+    boolean movements(int n);
 
 }

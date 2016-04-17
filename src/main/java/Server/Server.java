@@ -9,6 +9,7 @@ import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
 import net.sf.jgcs.jgroups.JGroupsService;
 import java.io.*;
 import java.net.SocketAddress;
+import java.rmi.dgc.VMID;
 import java.util.List;
 import static Communication.Message.Type;
 
@@ -68,39 +69,61 @@ public class Server implements MessageListener, MembershipListener {
     private void add() { count++; }
     private int getCount() { return count; }
 
+    private void sendResponse(Response res, boolean flag) throws IOException {
+        ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
+        ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
+
+        oosHere.writeObject(res);
+        byte[] data = bOuput.toByteArray();
+        Message toSend = dSession.createMessage();
+        toSend.setPayload(data);
+        System.out.println("[" + res.getVMID().hashCode() + " - " + res.getMsgNumber() + "] "
+                + "Sent response! Balance: " + bank.getBalance());
+        dSession.multicast(toSend, new JGroupsService(), null);
+        add();
+
+        if (!flag) {
+            System.out.println("Movements: " + getCount());
+        }
+    }
+
     public Object onMessage(Message msg) {
         try {
             ObjectInputStream oInput;
             ByteArrayInputStream bInput = new ByteArrayInputStream(msg.getPayload());
             oInput = new ObjectInputStream(bInput);
-            Communication.Message op = (Communication.Message) oInput.readObject();
+            Communication.Message receive = (Communication.Message) oInput.readObject();
 
-            Response res = null;
-            boolean flag = true;
-            if(op instanceof Operation || op instanceof StateTransfer) {
+            Response res;
+            if(receive instanceof Operation) {
+                Operation op = (Operation) receive;
                 switch (op.getType()) {
                     case MOVE:
                         if(state != 1) {
+                            System.out.println("Entrei!");
+
                             float value = op.getAmount();
                             boolean result = bank.move(value);
-                            res = new Response(Type.MOVE, result, ((Operation) op).getVmid(),
-                                    ((Operation) op).getMsgNumber());
+                            res = new Response(Type.MOVE, result, op.getVMID(),
+                                    op.getMsgNumber());
+                            sendResponse(res, true);
                         }
                         break;
                     case BALANCE:
                         if(state != 1) {
                             res = new Response(Type.BALANCE, bank.getBalance(),
-                                    ((Operation) op).getVmid(), ((Operation) op).getMsgNumber());
+                                    op.getVMID(), op.getMsgNumber());
+                            sendResponse(res, true);
                         }
                         break;
                     case LEAVE:
                         if(state != 1) {
-                            res = new Response(Type.LEAVE, ((Operation) op).getVmid(),
-                                    ((Operation) op).getMsgNumber());
-                            flag = false;
+                            res = new Response(Type.LEAVE, op.getVMID(),
+                                    op.getMsgNumber());
+                            sendResponse(res, false);
                         }
                         break;
-                    case STATE:
+                    /*case STATE:
                         if(state == 1) {
                             System.out.println("Recebi Estado! ");
                             if(op instanceof StateTransfer){
@@ -111,24 +134,7 @@ public class Server implements MessageListener, MembershipListener {
                             }
                             return null;
                         }
-                        break;
-                }
-                if(op instanceof Operation) {
-                    ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
-                    ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
-
-                    oosHere.writeObject(res);
-                    byte[] data = bOuput.toByteArray();
-                    Message toSend = dSession.createMessage();
-                    toSend.setPayload(data);
-                    System.out.println("[" + res.getVmid().hashCode() + " - " + res.getMsgNumber() + "] "
-                            + "Sent response! Balance: " + bank.getBalance());
-                    dSession.multicast(toSend, new JGroupsService(), null);
-                    add();
-
-                    if (!flag) {
-                        System.out.println("Movements: " + getCount());
-                    }
+                        break;*/
                 }
             }
         } catch (IOException ex) {
@@ -143,9 +149,9 @@ public class Server implements MessageListener, MembershipListener {
         try {
             List<SocketAddress> list = this.mSession.getMembership().getJoinedMembers();
 
-            if( list.size() != 0 && state != 1){
+            if( state != 1){
 
-                StateTransfer res = new StateTransfer(Type.STATE, 0, bank);
+                StateTransfer res = new StateTransfer(Type.ASKSTATE, 0, bank);
 
                 for(SocketAddress s : list){
                     ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
@@ -159,8 +165,8 @@ public class Server implements MessageListener, MembershipListener {
                             + "Sent State!");
                     dSession.multicast(toSend, new JGroupsService(), null);
                 }
-            } else {
-                //state = 2;
+            } else if( list.size() == 1) {
+                state = 2;
             }
         } catch (InvalidStateException e) {
             e.printStackTrace();

@@ -1,10 +1,9 @@
 package Client;
 
-import Communication.Response;
+import Communication.*;
 import net.sf.jgcs.*;
-import net.sf.jgcs.jgroups.JGroupsGroup;
-import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
-import net.sf.jgcs.jgroups.JGroupsService;
+import net.sf.jgcs.Message;
+import net.sf.jgcs.jgroups.*;
 
 import java.io.*;
 import java.rmi.dgc.VMID;
@@ -16,16 +15,25 @@ public class BankStub implements Bank.Bank, MessageListener {
 
     private ObjectOutputStream output;
     private DataSession dSession = null;
-    private Communication.Message response = null;
     private ByteArrayOutputStream bOutput = null;
 
+    /** Account id */
+    private static int accountId;
+
+    /** Identification */
     private static final String vmid = new VMID().toString();
+
+    /** Message counter */
     private static int count = 0;
 
-    private static HashSet<Integer> wMsg = new HashSet<Integer>();
+    private Response response = null;
+    private static HashSet<Integer> wMsg = new HashSet<>();
 
-    public BankStub() {
+    public BankStub(int accountId) {
         try {
+
+            this.accountId = accountId;
+
             JGroupsProtocolFactory pf = new JGroupsProtocolFactory();
             JGroupsGroup group = new JGroupsGroup("Bank");
             Protocol p = pf.createProtocol();
@@ -45,7 +53,7 @@ public class BankStub implements Bank.Bank, MessageListener {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.BALANCE,vmid, count);
+            Communication.Operation r = new Communication.Operation(Type.BALANCE, vmid, count, this.accountId);
 
             wMsg.add(count++);
 
@@ -78,7 +86,7 @@ public class BankStub implements Bank.Bank, MessageListener {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.MOVE, amount, vmid, count);
+            Communication.Operation r = new Communication.Operation(Type.MOVE, vmid, count, this.accountId, amount);
 
             wMsg.add(count++);
 
@@ -103,12 +111,22 @@ public class BankStub implements Bank.Bank, MessageListener {
         return res;
     }
 
+    @Override
+    public boolean transfer(int dest, int amount) {
+        return false;
+    }
+
+    @Override
+    public boolean movements(int n) {
+        return false;
+    }
+
     public synchronized void leave() {
         try {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.LEAVE, vmid, count);
+            Communication.Operation r = new Communication.Operation(Type.LEAVE, vmid, count, this.accountId);
 
             output.writeObject(r);
 
@@ -138,14 +156,19 @@ public class BankStub implements Bank.Bank, MessageListener {
 
             ByteArrayInputStream bInput = new ByteArrayInputStream(msg.getPayload());
             oisHere = new ObjectInputStream(bInput);
-            this.response = (Communication.Message) oisHere.readObject();
+            Communication.Message res = (Communication.Message) oisHere.readObject();
 
-            if(this.response instanceof Communication.Response
-                    && ((Response) this.response).getVmid().equals(vmid)
-                    && wMsg.contains(((Response) this.response).getMsgNumber())) {
-                notify();
-                System.out.println("[" + ((Response) this.response).getMsgNumber()  + "]" + "Receive response!");
-                wMsg.remove(((Response) this.response).getMsgNumber());
+            if(res instanceof Communication.Response) {
+
+                this.response = (Response) res;
+
+                if( this.response.getVMID().equals(vmid)
+                        && wMsg.contains(this.response.getMsgNumber())) {
+
+                    notify();
+                    System.out.println("[" + this.response.getMsgNumber()  + "]" + "Receive response!");
+                    wMsg.remove(this.response.getMsgNumber());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

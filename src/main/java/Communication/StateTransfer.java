@@ -8,7 +8,6 @@ public class StateTransfer extends Message {
     private int msgNumber;
     private Type op;
     private Bank bank;
-    private boolean response;
 
     public StateTransfer(Type op, int n, Bank b) {
         this.msgNumber = n;
@@ -18,9 +17,7 @@ public class StateTransfer extends Message {
 
     public Type getType() { return this.op; }
 
-    public float getAmount() { return 0; }
-
-    public boolean getResponse() { return this.response; }
+    public String getVMID() { return String.valueOf(this.msgNumber); }
 
     public int getMsgNumber() { return this.msgNumber; }
 

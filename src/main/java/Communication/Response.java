@@ -6,6 +6,7 @@ public class Response extends Message {
     private int msgNumber;
     private String vmid;
 
+    /** Message type */
     private Type op;
     private float amount;
     private boolean response;
@@ -35,11 +36,11 @@ public class Response extends Message {
         return this.op;
     }
 
+    public String getVMID() { return this.vmid; }
+
     public float getAmount() { return this.amount; }
 
     public boolean getResponse() { return this.response; }
-
-    public String getVmid() { return this.vmid; }
 
     public int getMsgNumber() { return this.msgNumber; }
 }
