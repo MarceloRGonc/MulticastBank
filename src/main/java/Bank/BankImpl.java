@@ -26,6 +26,9 @@ public class BankImpl implements Bank, Serializable{
         if (balance < 0) {
             System.out.println("[BankImpl] ERROR!");
             return false;
+
+
+
         }
 
         balance += value;
