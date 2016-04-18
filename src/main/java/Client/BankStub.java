@@ -136,7 +136,7 @@ public class BankStub implements Bank, MessageListener {
             this.output = new ObjectOutputStream(this.bOutput);
 
             // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
-            Communication.CreateLogin r = new Communication.CreateLogin(Type.REGISTER, vmid, count, 0, password);
+            Communication.CreateLogin r = new Communication.CreateLogin(Type.REGISTER, vmid, count, 0, password,true);
 
             wMsg.add(count++);
 
@@ -153,7 +153,6 @@ public class BankStub implements Bank, MessageListener {
             while (this.createLoginResponse == null) {
                 wait();
             }
-
             res = this.createLoginResponse.getAccount();
 
         } catch (IOException e) {
@@ -172,7 +171,7 @@ public class BankStub implements Bank, MessageListener {
             this.output = new ObjectOutputStream(this.bOutput);
 
             // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
-            Communication.CreateLogin r = new Communication.CreateLogin(Type.LOGIN, vmid, count, accountId, password);
+            Communication.CreateLogin r = new Communication.CreateLogin(Type.LOGIN, vmid, count, accountId, password,true);
 
             output.writeObject(r);
 
@@ -254,7 +253,7 @@ public class BankStub implements Bank, MessageListener {
                     wMsg.remove(this.response.getMsgNumber());
                 }
             }
-            else if(res instanceof Communication.CreateLogin) {
+            else if(res instanceof CreateLogin) {
 
                 this.createLoginResponse = (CreateLogin) res;
 

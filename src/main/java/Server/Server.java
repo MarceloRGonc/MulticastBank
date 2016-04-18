@@ -159,15 +159,15 @@ public class Server implements MessageListener, MembershipListener {
 
                 switch (cl.getType()) {
                     case REGISTER:
-                        if(state != 1) {
-                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),bank.createAccount(cl.getPassword()),cl.getPassword());
+                        if(state != 1 && cl.getControl()) {
+                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),bank.createAccount(cl.getPassword()),cl.getPassword(),false);
                             sendResponse(clres, true);
                         }
                         break;
 
                     case LOGIN:
-                        if(state != 1) {
-                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),cl.getAccount(),cl.getPassword(),bank.loginAccount(cl.getAccount(),cl.getPassword()));
+                        if(state != 1 && cl.getControl()) {
+                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),cl.getAccount(),cl.getPassword(),bank.loginAccount(cl.getAccount(),cl.getPassword()),false);
                             sendResponse(clres, true);
                         }
                         break;
@@ -178,6 +178,7 @@ public class Server implements MessageListener, MembershipListener {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 

@@ -20,21 +20,26 @@ public class CreateLogin extends Message {
     /** login sucess */
     private boolean sucess;
 
-    public CreateLogin(Type op, String vmid, int msgNumber, int account, String password) {
+    /** bool control */
+    private boolean control;
+
+    public CreateLogin(Type op, String vmid, int msgNumber, int account, String password, boolean control) {
         this.type = op;
         this.vmid = vmid;
         this.msgNumber = msgNumber;
         this.account = account;
         this.password = password;
+        this.control = control;
     }
 
-    public CreateLogin(Type op, String vmid, int msgNumber, int account, String password, boolean sucess) {
+    public CreateLogin(Type op, String vmid, int msgNumber, int account, String password, boolean sucess,boolean control) {
         this.type = op;
         this.vmid = vmid;
         this.msgNumber = msgNumber;
         this.account = account;
         this.password = password;
         this.sucess = sucess;
+        this.control = control;
     }
 
     public Type getType() { return this.type; }
@@ -48,4 +53,6 @@ public class CreateLogin extends Message {
     public String getPassword() { return this.password; }
 
     public boolean getSucess(){ return this.sucess; }
+
+    public boolean getControl() { return this.control; }
 }

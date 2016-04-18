@@ -6,7 +6,7 @@ import java.util.*;
 public class BankImpl implements Bank, Serializable{
 
     /** Accounts counter */
-    private int accountsID;
+    private static int accountsID;
 
     // Accounts
     private Map<Integer, Account> accounts;
@@ -15,13 +15,16 @@ public class BankImpl implements Bank, Serializable{
     public BankImpl(){
         this.accountsID = 0;
         this.accounts = new HashMap<>();
+        System.out.println("oi");
     }
 
     // Create Account
     public synchronized int createAccount(String password){
-        Account account = new Account(accountsID,password,0);
-        accounts.put(accountsID,account);
-        return accountsID++;
+        int accountNumber = accountsID;
+        accountsID++;
+        Account account = new Account(accountNumber,password,0);
+        this.accounts.put(accountNumber,account);
+        return accountNumber;
     }
 
     // Login
