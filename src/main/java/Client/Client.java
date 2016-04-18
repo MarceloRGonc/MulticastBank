@@ -29,6 +29,8 @@ public class Client {
         bwConsole.flush();
         bwConsole.write("3 - Bank balance\n");
         bwConsole.flush();
+        bwConsole.write("4 - Last moviments\n");
+        bwConsole.flush();
         bwConsole.write("0 - Shutdown\n");
         bwConsole.flush();
     }
@@ -40,7 +42,7 @@ public class Client {
             bwConsole = new BufferedWriter(new OutputStreamWriter(System.out));
 
             boolean shutdown = false;
-            BankStub bank = new BankStub(1);
+            BankStub bank = new BankStub();
 
             while (!shutdown) {
 
@@ -53,17 +55,22 @@ public class Client {
                     case '1':
                         bwConsole.write("Account: ");
                         bwConsole.flush();
-                        String accountNumber = brConsole.readLine().trim();
+                        int accountNumber = Integer.parseInt(brConsole.readLine().trim());
                         bwConsole.write("Password: ");
                         bwConsole.flush();
                         String accountPassword = brConsole.readLine().trim();
 
-                        // Verificar se conta existe
-                        // Não existe
+                        // Não existe Conta
+                        if(!bank.login(accountNumber,accountPassword)){
+                            bwConsole.write("[Response] Something went wrong. Try again.\n");
+                            bwConsole.flush();
+                            break;
+                        }
 
-                        // Se Existe
+                        // Existe conta
                         printMenu2();
                         String amount;
+                        bank.setAccountId(accountNumber);
 
                         while (!shutdown) {
                             opt = brConsole.readLine().trim();
@@ -81,6 +88,7 @@ public class Client {
                                         bwConsole.flush();
                                     }
                                     break;
+
                                 case '2':
                                     bwConsole.write("Amount: \n");
                                     bwConsole.flush();
@@ -93,10 +101,15 @@ public class Client {
                                         bwConsole.flush();
                                     }
                                     break;
+
                                 case '3':
                                     bwConsole.write("[Response] Real Balance: " + bank.getBalance() + "\n");
                                     bwConsole.flush();
                                     break;
+
+                                case '4':
+                                    break;
+
                                 case '0':
                                     shutdown = true;
                                     bank.leave();
@@ -109,7 +122,7 @@ public class Client {
                                     bwConsole.flush();
                             }
                         }
-
+                        shutdown = false;
                         break;
 
                     // Criar conta
@@ -121,10 +134,17 @@ public class Client {
                         bwConsole.flush();
                         String accountPassword2 = brConsole.readLine().trim();
 
-                        // Devolve número de conta
+                        // Servidor devolve numero de conta
                         if(accountPassword1.equals(accountPassword2)){
-                            bwConsole.write("Account: 10\n");
-                            bwConsole.flush();
+                            int accountId = bank.createAccount(accountPassword1);
+                            if(accountId != -1){
+                                bwConsole.write("[Response] Your number account: " + accountId + "\n");
+                                bwConsole.flush();
+                            }
+                            else{
+                                bwConsole.write("[Response] Something went wrong. Try again.\n");
+                                bwConsole.flush();
+                            }
                         }
                         // Error
                         else{

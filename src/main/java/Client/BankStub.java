@@ -9,9 +9,11 @@ import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
 
+import Bank.Bank;
+
 import static Communication.Message.*;
 
-public class BankStub implements Bank.Bank, MessageListener {
+public class BankStub implements Bank, MessageListener {
 
     private ObjectOutputStream output;
     private DataSession dSession = null;
@@ -27,13 +29,11 @@ public class BankStub implements Bank.Bank, MessageListener {
     private static int count = 0;
 
     private Response response = null;
+    private CreateLogin createLoginResponse = null;
     private static HashSet<Integer> wMsg = new HashSet<>();
 
-    public BankStub(int accountId) {
+    public BankStub() {
         try {
-
-            this.accountId = accountId;
-
             JGroupsProtocolFactory pf = new JGroupsProtocolFactory();
             JGroupsGroup group = new JGroupsGroup("Bank");
             Protocol p = pf.createProtocol();
@@ -45,6 +45,11 @@ public class BankStub implements Bank.Bank, MessageListener {
         } catch (IOException ex) {
             System.out.println("Something went wrong!");
         }
+    }
+
+    // Atualizar Número da conta
+    public void setAccountId(int accountId){
+        this.accountId = accountId;
     }
 
     public synchronized float getBalance() {
@@ -71,12 +76,18 @@ public class BankStub implements Bank.Bank, MessageListener {
             }
 
             res = this.response.getAmount();
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return res;
+    }
+
+    @Override
+    public float getBalance(int accountId) {
+        return 0;
     }
 
     public synchronized boolean move(float amount) {
@@ -112,14 +123,87 @@ public class BankStub implements Bank.Bank, MessageListener {
     }
 
     @Override
-    public boolean transfer(int dest, int amount) {
+    public boolean move(int accountId, float value) {
         return false;
     }
 
+    // Create Account
+    // -1 erro
+    public synchronized int createAccount(String password) {
+        int res = -1;
+        try {
+            this.bOutput = new ByteArrayOutputStream();
+            this.output = new ObjectOutputStream(this.bOutput);
+
+            // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
+            Communication.CreateLogin r = new Communication.CreateLogin(Type.REGISTER, vmid, count, 0, password);
+
+            wMsg.add(count++);
+
+            this.output.writeObject(r);
+
+            byte[] data = bOutput.toByteArray();
+
+            Message msg = dSession.createMessage();
+            msg.setPayload(data);
+            this.createLoginResponse = null;
+            dSession.multicast(msg, new JGroupsService(), null);
+
+            // Espera resposta
+            while (this.createLoginResponse == null) {
+                wait();
+            }
+
+            res = this.createLoginResponse.getAccount();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    // Login
+    public synchronized boolean login(int accountId, String password) {
+        boolean bool = false;
+        try {
+            this.bOutput = new ByteArrayOutputStream();
+            this.output = new ObjectOutputStream(this.bOutput);
+
+            // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
+            Communication.CreateLogin r = new Communication.CreateLogin(Type.LOGIN, vmid, count, accountId, password);
+
+            output.writeObject(r);
+
+            wMsg.add(count++);
+
+            byte[] data = bOutput.toByteArray();
+
+            Message msg = dSession.createMessage();
+            msg.setPayload(data);
+            this.createLoginResponse = null;
+            dSession.multicast(msg, new JGroupsService(), null);
+
+            while (this.createLoginResponse == null) {
+                wait();
+            }
+
+            bool = this.createLoginResponse.getSucess();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return bool;
+    }
+
     @Override
-    public boolean movements(int n) {
+    public boolean transfer(int source,int dest, float amount) {
         return false;
     }
+
 
     public synchronized void leave() {
         try {
@@ -170,6 +254,20 @@ public class BankStub implements Bank.Bank, MessageListener {
                     wMsg.remove(this.response.getMsgNumber());
                 }
             }
+            else if(res instanceof Communication.CreateLogin) {
+
+                this.createLoginResponse = (CreateLogin) res;
+
+                if( this.createLoginResponse.getVMID().equals(vmid)
+                        && wMsg.contains(this.createLoginResponse.getMsgNumber())) {
+
+                    notify();
+                    System.out.println("[" + this.createLoginResponse.getMsgNumber()  + "]" + "Receive response!");
+                    wMsg.remove(this.createLoginResponse.getMsgNumber());
+                }
+            }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

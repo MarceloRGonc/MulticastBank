@@ -5,7 +5,7 @@ import java.util.Random;
 public class Tester {
 
     public static void main(String[] args) {
-        BankStub bank = new BankStub(0);
+        BankStub bank = new BankStub();
 
         float moves = 0;
         for (int i = 0; i < 1000; i++) {

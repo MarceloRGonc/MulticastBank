@@ -69,16 +69,31 @@ public class Server implements MessageListener, MembershipListener {
     private void add() { count++; }
     private int getCount() { return count; }
 
-    private void sendResponse(Response res, boolean flag) throws IOException {
+    private void sendResponse(Object obj, boolean flag) throws IOException {
         ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
         ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
 
-        oosHere.writeObject(res);
+        oosHere.writeObject(obj);
         byte[] data = bOuput.toByteArray();
         Message toSend = dSession.createMessage();
         toSend.setPayload(data);
-        System.out.println("[" + res.getVMID().hashCode() + " - " + res.getMsgNumber() + "] "
+
+        String vmid;
+        int msgNumber;
+
+        if(obj instanceof Communication.Response) {
+            vmid = ((Response) obj).getVMID();
+            msgNumber = ((Response) obj).getMsgNumber();
+        }
+        else {
+            vmid = ((CreateLogin) obj).getVMID();
+            msgNumber = ((CreateLogin) obj).getMsgNumber();
+        }
+
+        System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
                 + "Sent response! Balance: " + bank.getBalance());
+
+
         dSession.multicast(toSend, new JGroupsService(), null);
         add();
 
@@ -95,13 +110,14 @@ public class Server implements MessageListener, MembershipListener {
             Communication.Message receive = (Communication.Message) oInput.readObject();
 
             Response res;
+            CreateLogin clres;
+
             if(receive instanceof Operation) {
+
                 Operation op = (Operation) receive;
                 switch (op.getType()) {
                     case MOVE:
                         if(state != 1) {
-                            System.out.println("Entrei!");
-
                             float value = op.getAmount();
                             boolean result = bank.move(value);
                             res = new Response(Type.MOVE, result, op.getVMID(),
@@ -123,6 +139,7 @@ public class Server implements MessageListener, MembershipListener {
                             sendResponse(res, false);
                         }
                         break;
+
                     /*case STATE:
                         if(state == 1) {
                             System.out.println("Recebi Estado! ");
@@ -135,6 +152,25 @@ public class Server implements MessageListener, MembershipListener {
                             return null;
                         }
                         break;*/
+                }
+            }
+            else if(receive instanceof CreateLogin) {
+                CreateLogin cl = (CreateLogin) receive;
+
+                switch (cl.getType()) {
+                    case REGISTER:
+                        if(state != 1) {
+                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),bank.createAccount(cl.getPassword()),cl.getPassword());
+                            sendResponse(clres, true);
+                        }
+                        break;
+
+                    case LOGIN:
+                        if(state != 1) {
+                            clres = new CreateLogin(Type.REGISTER,cl.getVMID(),cl.getMsgNumber(),cl.getAccount(),cl.getPassword(),bank.loginAccount(cl.getAccount(),cl.getPassword()));
+                            sendResponse(clres, true);
+                        }
+                        break;
                 }
             }
         } catch (IOException ex) {

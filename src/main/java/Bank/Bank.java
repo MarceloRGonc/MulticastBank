@@ -4,10 +4,12 @@ public interface Bank {
 
     float getBalance();
 
+    float getBalance(int accountId);
+
     boolean move(float value);
 
-    boolean transfer(int dest, int amount);
+    boolean move(int accountId,float value);
 
-    boolean movements(int n);
+    boolean transfer(int source, int dest, float amount);
 
 }
