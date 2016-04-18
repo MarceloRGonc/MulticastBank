@@ -1,5 +1,8 @@
 package Bank;
 
+import Communication.Message;
+import Communication.Operation;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -15,7 +18,6 @@ public class BankImpl implements Bank, Serializable{
     public BankImpl(){
         this.accountsID = 0;
         this.accounts = new HashMap<>();
-        System.out.println("oi");
     }
 
     // Create Account
@@ -33,46 +35,66 @@ public class BankImpl implements Bank, Serializable{
     }
 
     // Movimentos
-    public synchronized boolean move(int accountId, float value) {
+    public synchronized boolean move(Operation op) {
 
-        /**Account account = this.accounts.get(accountId);
+        Account account = this.accounts.get(op.getOrigin());
 
-        if ((account.getValue() + value) < 0) {
+        if ((account.getValue() + op.getAmount()) < 0) {
             System.out.println("[BankImpl] ERROR!");
             return false;
         }
 
-        Mov.Type type;
+        account.addMov(op);
+        account.setValue(account.getValue() + op.getAmount());
 
-        if(value < 0){
-            type = Mov.Type.WITHDRAW;
-        }
-        else{
-            type = Mov.Type.DEPOSIT;
-        }
-
-        Mov mov = new  Mov(type,value);
-
-        account.addMov(mov);
-        account.setValue(account.getValue() + value);
-    */
         return true;
     }
 
-    public boolean move(float value) {
+    public boolean move(int value) {
         return false;
     }
 
     @Override
-    public synchronized float getBalance(int accountId) {
+    public synchronized int getBalance(int accountId) {
         return this.accounts.get(accountId).getValue();
     }
 
     @Override
-    public float getBalance() {
+    public int getBalance() {
         return 0;
     }
 
-    public boolean transfer(int source, int dest, float amount) { return true;}
+    public boolean transfer(int source, int dest, int amount) { return true;}
+
+    public boolean transfer(Operation op){
+
+        // Verifica se 2 conta existe
+        if(!this.accounts.containsKey(op.getDestination())){
+            return false;
+        }
+
+        Account account1 = this.accounts.get(op.getOrigin());
+
+        // Valor
+        int value = account1.getValue() - op.getAmount();
+
+        // Verifica se conta 1 tem saldo suficiente
+        if(value < 0){
+            return false;
+        }
+
+        Account account2 = this.accounts.get(op.getDestination());
+        int value2 = account2.getValue() + op.getAmount();
+
+        // update values
+        account1.setValue(value);
+        account2.setValue(value2);
+
+        // Guardar movimentos
+        account1.addMov(op);
+        account2.addMov(op);
+
+        return true;
+    }
 
 }

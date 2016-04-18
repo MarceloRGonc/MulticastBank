@@ -15,7 +15,7 @@ public class Operation extends Message {
     private Type type;
 
     /** Amount involved in the operation */
-    private float amount;
+    private int amount;
 
     public Operation(Type op, String vmid, int msgNumber, int orig) {
         this.vmid = vmid;
@@ -26,7 +26,7 @@ public class Operation extends Message {
         this.amount = 0;
     }
 
-    public Operation(Type op, String vmid, int msgNumber, int orig, float amount) {
+    public Operation(Type op, String vmid, int msgNumber, int orig, int amount) {
         this.vmid = vmid;
         this.msgNumber = msgNumber;
         this.orig = orig;
@@ -35,7 +35,7 @@ public class Operation extends Message {
         this.amount = amount;
     }
 
-    public Operation(Type op, String vmid, int msgNumber, int orig, int dest, float amount) {
+    public Operation(Type op, String vmid, int msgNumber, int orig, int dest, int amount) {
         this.vmid = vmid;
         this.msgNumber = msgNumber;
         this.type = op;
@@ -50,9 +50,9 @@ public class Operation extends Message {
 
     public int getMsgNumber() { return this.msgNumber; }
 
-    public float getAmount() { return this.amount; }
+    public int getAmount() { return this.amount; }
 
-    public int getOrigin() { return this.dest; }
+    public int getOrigin() { return this.orig; }
 
     public int getDestination() { return this.dest; }
 

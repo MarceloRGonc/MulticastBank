@@ -11,10 +11,10 @@ public class Account {
 
     private int accountId;
     private String accountPassword;
-    private Map<String,Operation> operations;
-    private float value;
+    private Map<Integer,Operation> operations;
+    private int value;
 
-    public Account (int accountId, String accountPassword, float value){
+    public Account (int accountId, String accountPassword, int value){
         this.accountId = accountId;
         this.accountPassword = accountPassword;
         this.operations = new HashMap<>();
@@ -47,19 +47,19 @@ public class Account {
     public void setOperations(HashMap<String,Operation> operations) {
         this.operations = new HashMap<>();
         for(Operation op : operations.values())
-            this.operations.put(op.getVMID(),op);
+            this.operations.put(op.getMsgNumber(),op);
     }
 
-    public float getValue() {
+    public int getValue() {
         return value;
     }
 
-    public void setValue(float value) {
+    public void setValue(int value) {
         this.value = value;
     }
 
     public void addMov(Operation o){
-        this.operations.put(o.getVMID(),o);
+        this.operations.put(o.getMsgNumber(),o);
     }
 
     public boolean loginAccount(int accountId,String accountPassword){

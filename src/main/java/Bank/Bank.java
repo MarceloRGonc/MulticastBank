@@ -1,15 +1,19 @@
 package Bank;
 
+import Communication.Operation;
+
 public interface Bank {
 
-    float getBalance();
+    int getBalance();
 
-    float getBalance(int accountId);
+    int getBalance(int accountId);
 
-    boolean move(float value);
+    boolean move(int value);
 
-    boolean move(int accountId,float value);
+    boolean move(Operation op);
 
-    boolean transfer(int source, int dest, float amount);
+    boolean transfer(int source, int dest, int amount);
+
+    boolean transfer(Operation op);
 
 }

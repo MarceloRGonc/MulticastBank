@@ -52,8 +52,8 @@ public class BankStub implements Bank, MessageListener {
         this.accountId = accountId;
     }
 
-    public synchronized float getBalance() {
-        float res = -1;
+    public synchronized int getBalance() {
+        int res = -1;
         try {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
@@ -86,11 +86,11 @@ public class BankStub implements Bank, MessageListener {
     }
 
     @Override
-    public float getBalance(int accountId) {
+    public int getBalance(int accountId) {
         return 0;
     }
 
-    public synchronized boolean move(float amount) {
+    public synchronized boolean move(int amount) {
         boolean res = false;
 
         try {
@@ -114,6 +114,7 @@ public class BankStub implements Bank, MessageListener {
             }
 
             res = this.response.getResponse();
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -123,7 +124,7 @@ public class BankStub implements Bank, MessageListener {
     }
 
     @Override
-    public boolean move(int accountId, float value) {
+    public boolean move(Operation op) {
         return false;
     }
 
@@ -201,10 +202,40 @@ public class BankStub implements Bank, MessageListener {
     }
 
     @Override
-    public boolean transfer(int source,int dest, float amount) {
-        return false;
+    public synchronized boolean transfer(int source,int dest, int amount) {
+        boolean res = false;
+
+        try {
+            this.bOutput = new ByteArrayOutputStream();
+            this.output = new ObjectOutputStream(this.bOutput);
+
+            Communication.Operation r = new Communication.Operation(Type.TRANSFER, vmid, count, source, dest, amount);
+
+            wMsg.add(count++);
+
+            this.output.writeObject(r);
+            byte[] data = bOutput.toByteArray();
+
+            Message msg = dSession.createMessage();
+            msg.setPayload(data);
+            this.response = null;
+            dSession.multicast(msg, new JGroupsService(), null);
+
+            while (this.response == null) {
+                wait();
+            }
+
+            res = this.response.getResponse();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return res;
     }
 
+    public boolean transfer(Operation op){ return true; }
 
     public synchronized void leave() {
         try {

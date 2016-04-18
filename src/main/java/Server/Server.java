@@ -84,15 +84,16 @@ public class Server implements MessageListener, MembershipListener {
         if(obj instanceof Communication.Response) {
             vmid = ((Response) obj).getVMID();
             msgNumber = ((Response) obj).getMsgNumber();
+            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
+                    + "Sent response! Account: " + ((Response) obj).getAccountId() +
+                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));
         }
         else {
             vmid = ((CreateLogin) obj).getVMID();
             msgNumber = ((CreateLogin) obj).getMsgNumber();
+            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
+                    + "Sent response! Account: " + ((CreateLogin) obj).getAccount() );
         }
-
-        System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
-                + "Sent response! Balance: " + bank.getBalance());
-
 
         dSession.multicast(toSend, new JGroupsService(), null);
         add();
@@ -118,24 +119,34 @@ public class Server implements MessageListener, MembershipListener {
                 switch (op.getType()) {
                     case MOVE:
                         if(state != 1) {
-                            float value = op.getAmount();
-                            boolean result = bank.move(value);
+                            boolean result = bank.move(op);
                             res = new Response(Type.MOVE, result, op.getVMID(),
-                                    op.getMsgNumber());
+                                    op.getMsgNumber(),op.getOrigin());
                             sendResponse(res, true);
                         }
                         break;
+
+                    case TRANSFER:
+                        if(state != 1) {
+                            boolean result = bank.transfer(op);
+                            res = new Response(Type.TRANSFER, result, op.getVMID(),
+                                    op.getMsgNumber(),op.getOrigin());
+                            sendResponse(res, true);
+                        }
+                        break;
+
                     case BALANCE:
                         if(state != 1) {
-                            res = new Response(Type.BALANCE, bank.getBalance(),
-                                    op.getVMID(), op.getMsgNumber());
+                            res = new Response(Type.BALANCE, bank.getBalance(op.getOrigin()),
+                                    op.getVMID(), op.getMsgNumber(),op.getOrigin());
                             sendResponse(res, true);
                         }
                         break;
+
                     case LEAVE:
                         if(state != 1) {
                             res = new Response(Type.LEAVE, op.getVMID(),
-                                    op.getMsgNumber());
+                                    op.getMsgNumber(),op.getDestination());
                             sendResponse(res, false);
                         }
                         break;
