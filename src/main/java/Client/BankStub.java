@@ -146,6 +146,7 @@ public class BankStub implements Bank, MessageListener {
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
+
             this.createLoginResponse = null;
             dSession.multicast(msg, new JGroupsService(), null);
 
@@ -153,6 +154,7 @@ public class BankStub implements Bank, MessageListener {
             while (this.createLoginResponse == null) {
                 wait();
             }
+
             res = this.createLoginResponse.getAccount();
 
         } catch (IOException e) {
@@ -258,7 +260,7 @@ public class BankStub implements Bank, MessageListener {
                 this.createLoginResponse = (CreateLogin) res;
 
                 if( this.createLoginResponse.getVMID().equals(vmid)
-                        && wMsg.contains(this.createLoginResponse.getMsgNumber())) {
+                        && wMsg.contains(this.createLoginResponse.getMsgNumber()) && !this.createLoginResponse.getControl()) {
 
                     notify();
                     System.out.println("[" + this.createLoginResponse.getMsgNumber()  + "]" + "Receive response!");
