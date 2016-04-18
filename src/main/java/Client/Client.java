@@ -4,8 +4,6 @@ import java.io.*;
 
 public class Client {
 
-    private static int balance = 0;
-
     private static BufferedReader brConsole;
     private static BufferedWriter bwConsole;
 
@@ -83,7 +81,8 @@ public class Client {
                                     amount = brConsole.readLine().trim();
 
                                     if (bank.move(Integer.parseInt(amount))) {
-                                        //
+                                        bwConsole.write("[Response] Deposit Okay\n");
+                                        bwConsole.flush();
                                     } else {
                                         bwConsole.write("[Response] Error\n");
                                         bwConsole.flush();
@@ -96,7 +95,8 @@ public class Client {
                                     amount = brConsole.readLine().trim();
 
                                     if (bank.move(0 - Integer.parseInt(amount))) {
-                                        balance -= Integer.parseInt(amount);
+                                        bwConsole.write("[Response] Withdraw Okay\n");
+                                        bwConsole.flush();
                                     } else {
                                         bwConsole.write("[Response] Error\n");
                                         bwConsole.flush();
