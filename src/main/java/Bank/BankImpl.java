@@ -97,4 +97,13 @@ public class BankImpl implements Bank, Serializable{
         return true;
     }
 
+
+    public String moveList(int nMoviments){
+        return "";
+    }
+
+    public String moveList(int accountId, int nMoviments){
+        return this.accounts.get(accountId).getMoves(nMoviments);
+    }
+
 }

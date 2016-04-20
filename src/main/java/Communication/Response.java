@@ -12,6 +12,8 @@ public class Response extends Message {
     private boolean response;
     private int accountId;
 
+    private String result;
+
 
     public Response(Type op, boolean m , String vmid, int n,int accountId) {
         this.vmid = vmid;
@@ -36,6 +38,14 @@ public class Response extends Message {
         this.accountId = accountId;
     }
 
+    public Response(Type op, String vmid, int n, int accountID,String result) {
+        this.op = op;
+        this.vmid = vmid;
+        this.msgNumber = n;
+        this.accountId = accountID;
+        this.result = result;
+    }
+
     public Type getType() {
         return this.op;
     }
@@ -49,4 +59,6 @@ public class Response extends Message {
     public int getMsgNumber() { return this.msgNumber; }
 
     public int getAccountId(){ return  this.accountId; }
+
+    public String getResult(){ return this.result;}
 }

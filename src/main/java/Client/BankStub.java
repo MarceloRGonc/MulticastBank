@@ -266,6 +266,44 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
+    public synchronized String moveList(int nMoviments){
+        String res = "";
+
+        try {
+            this.bOutput = new ByteArrayOutputStream();
+            this.output = new ObjectOutputStream(this.bOutput);
+
+            Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, this.accountId, nMoviments);
+
+            wMsg.add(count++);
+
+            this.output.writeObject(r);
+            byte[] data = bOutput.toByteArray();
+
+            Message msg = dSession.createMessage();
+            msg.setPayload(data);
+            this.response = null;
+            dSession.multicast(msg, new JGroupsService(), null);
+
+            while (this.response == null) {
+                wait();
+            }
+
+            res = this.response.getResult();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    public synchronized String moveList(int accountId, int nMoviments){
+        return "";
+    }
+
+
     public synchronized Object onMessage(Message msg) {
         ObjectInputStream oisHere = null;
         try {

@@ -56,4 +56,22 @@ public class Operation extends Message {
 
     public int getDestination() { return this.dest; }
 
+    public String toString(){
+        String res = "";
+        res += "Number Msg: " + this.msgNumber;
+        res += "\nAmount: " + this.amount;
+
+        if(this.type == Type.TRANSFER)
+            res += "\nType: Transfer to account: " + this.dest;
+        else {
+            if(this.amount > 0){
+                res += "\nType: Deposit";
+            }
+            else{
+                res += "\nType: Withdraw";
+            }
+        }
+        return res;
+    }
+
 }

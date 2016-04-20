@@ -143,6 +143,15 @@ public class Server implements MessageListener, MembershipListener {
                         }
                         break;
 
+                    case MOVEMENTS:
+                        if(state != 1) {
+                            String str = "VMID: " + op.getVMID() +"\n";
+                            str += bank.moveList(op.getOrigin(),op.getDestination());
+                            res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
+                            sendResponse(res, true);
+                        }
+                        break;
+
                     case LEAVE:
                         if(state != 1) {
                             res = new Response(Type.LEAVE, op.getVMID(),

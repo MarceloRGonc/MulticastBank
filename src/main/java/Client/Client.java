@@ -131,6 +131,19 @@ public class Client {
                                     break;
 
                                 case '5':
+                                    bwConsole.write("Moviments: ");
+                                    bwConsole.flush();
+                                    String nMoviments = brConsole.readLine().trim();
+                                    int movimentos = Integer.parseInt(nMoviments);
+                                    if (movimentos > 0){
+                                        bwConsole.write("[Response]");
+                                        bwConsole.write(bank.moveList(movimentos));
+                                        bwConsole.flush();
+                                    }
+                                    else{
+                                        bwConsole.write("[Response] Something went wrong\n");
+                                        bwConsole.flush();
+                                    }
                                     break;
 
                                 case '0':

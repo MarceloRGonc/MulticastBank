@@ -65,4 +65,16 @@ public class Account {
     public boolean loginAccount(int accountId,String accountPassword){
         return accountId == this.accountId && accountPassword.equals(this.accountPassword);
     }
+
+    public String getMoves(int nMoviments){
+        int total = operations.size();
+        String res="";
+        res += "Account: " + this.accountId + "\n";
+        while (nMoviments > 0 && total > 0){
+            res += operations.get(total-1).toString();
+            total--;
+            nMoviments--;
+        }
+        return res;
+    }
 }
