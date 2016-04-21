@@ -1,13 +1,10 @@
 package Bank;
 
+import java.io.Serializable;
 import java.util.*;
 import Communication.Operation;
 
-/**
- * Created by brunorebelo on 17/04/16.
- */
-
-public class Account {
+public class Account implements Serializable {
 
     private int accountId;
     private String accountPassword;
@@ -59,7 +56,7 @@ public class Account {
     }
 
     public void addMov(Operation o){
-        this.operations.put(o.getMsgNumber(),o);
+        this.operations.put(o.getMsgNumber(), o.clone());
     }
 
     public boolean loginAccount(int accountId,String accountPassword){

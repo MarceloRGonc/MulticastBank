@@ -44,6 +44,15 @@ public class Operation extends Message {
         this.amount = amount;
     }
 
+    public Operation(Operation op) {
+        this.vmid = op.getVMID();
+        this.msgNumber = op.getMsgNumber();
+        this.type = op.getType();
+        this.orig = op.getOrigin();
+        this.dest = op.getDestination();
+        this.amount = op.getAmount();
+    }
+
     public Type getType() { return this.type; }
 
     public String getVMID() { return this.vmid; }
@@ -71,7 +80,12 @@ public class Operation extends Message {
                 res += "\nType: Withdraw";
             }
         }
+        System.out.println(
+        "\n" + res + "\n");
         return res;
     }
 
+    public Operation clone() {
+        return new Operation(this);
+    }
 }

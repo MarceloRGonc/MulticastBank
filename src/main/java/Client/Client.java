@@ -50,7 +50,7 @@ public class Client {
 
                 switch(opt.charAt(0)) {
 
-                    // Login
+                    /** Login */
                     case '1':
                         bwConsole.write("Account: ");
                         bwConsole.flush();
@@ -59,17 +59,16 @@ public class Client {
                         bwConsole.flush();
                         String accountPassword = brConsole.readLine().trim();
 
-                        // Não existe Conta
-                        if(!bank.login(accountId,accountPassword)){
-                            bwConsole.write("[Response] Something went wrong. Try again.\n");
+                        /** Account doesn't exist */
+                        if(!bank.login(accountId, accountPassword)){
+                            bwConsole.write("[Response] This account doesn't exist.\n");
                             bwConsole.flush();
                             break;
                         }
 
-                        // Existe conta
+                        /** Account exist*/
                         String amount;
                         bank.setAccountId(accountId);
-
                         while (!shutdown) {
                             printMenu2(accountId);
                             opt = brConsole.readLine().trim();
@@ -80,11 +79,11 @@ public class Client {
                                     bwConsole.flush();
                                     amount = brConsole.readLine().trim();
 
-                                    if (bank.move(Integer.parseInt(amount))) {
-                                        bwConsole.write("[Response] Deposit Okay\n");
+                                    if (bank.move(Integer.parseInt(amount), null)) {
+                                        bwConsole.write("[Response] Deposit made!\n");
                                         bwConsole.flush();
                                     } else {
-                                        bwConsole.write("[Response] Error\n");
+                                        bwConsole.write("[Response] Something went wrong!\n");
                                         bwConsole.flush();
                                     }
                                     break;
@@ -94,11 +93,11 @@ public class Client {
                                     bwConsole.flush();
                                     amount = brConsole.readLine().trim();
 
-                                    if (bank.move(0 - Integer.parseInt(amount))) {
-                                        bwConsole.write("[Response] Withdraw Okay\n");
+                                    if (bank.move(0 - Integer.parseInt(amount), null)) {
+                                        bwConsole.write("[Response] Withdraw made\n");
                                         bwConsole.flush();
                                     } else {
-                                        bwConsole.write("[Response] Error\n");
+                                        bwConsole.write("[Response] Something went wrong!\n");
                                         bwConsole.flush();
                                     }
                                     break;
@@ -111,22 +110,22 @@ public class Client {
                                     bwConsole.flush();
                                     amount = brConsole.readLine().trim();
 
-                                    // Verificar se conta 2 existe e se conta 1 tem saldo
+                                    /** Verifies that the account 2 exists and that account 1 have money */
                                     if(accountId == Integer.parseInt(account1)){
-                                        bwConsole.write("[Response] Account it's the same! \n");
+                                        bwConsole.write("[Response] It's the same account!\n");
                                         bwConsole.flush();
                                     }
-                                    else if (bank.transfer(accountId,Integer.parseInt(account1),Integer.parseInt(amount))) {
-                                        bwConsole.write("[Response] Transfer okay!\n");
+                                    else if (bank.transfer(accountId,Integer.parseInt(account1),Integer.parseInt(amount), null)) {
+                                        bwConsole.write("[Response] Transfer made!\n");
                                         bwConsole.flush();
                                     } else {
-                                        bwConsole.write("[Response] Error\n");
+                                        bwConsole.write("[Response] Something went wrong\n");
                                         bwConsole.flush();
                                     }
                                     break;
 
                                 case '4':
-                                    bwConsole.write("[Response] Real Balance: " + bank.getBalance() + "\n");
+                                    bwConsole.write("[Response] Real Balance: " + bank.getBalance(accountId) + "\n");
                                     bwConsole.flush();
                                     break;
 
@@ -136,8 +135,8 @@ public class Client {
                                     String nMoviments = brConsole.readLine().trim();
                                     int movimentos = Integer.parseInt(nMoviments);
                                     if (movimentos > 0){
-                                        bwConsole.write("[Response]");
-                                        bwConsole.write(bank.moveList(movimentos));
+                                        bwConsole.write("[Response] \n");
+                                        bwConsole.write(bank.moveList(accountId, movimentos));
                                         bwConsole.flush();
                                     }
                                     else{
@@ -161,7 +160,7 @@ public class Client {
                         shutdown = false;
                         break;
 
-                    // Criar conta
+                    /** Create an account */
                     case '2':
                         bwConsole.write("Password: ");
                         bwConsole.flush();
@@ -170,11 +169,11 @@ public class Client {
                         bwConsole.flush();
                         String accountPassword2 = brConsole.readLine().trim();
 
-                        // Servidor devolve numero de conta
+                        /** Server returns account number */
                         if(accountPassword1.equals(accountPassword2)){
                             accountId = bank.createAccount(accountPassword1);
                             if(accountId != -1){
-                                bwConsole.write("[Response] Your number account: " + accountId + "\n");
+                                bwConsole.write("[Response] Your account number is: " + accountId + "\n");
                                 bwConsole.flush();
                             }
                             else{
@@ -182,9 +181,8 @@ public class Client {
                                 bwConsole.flush();
                             }
                         }
-                        // Error
                         else{
-                            bwConsole.write("[Response] Password does not match\n");
+                            bwConsole.write("[Response] Password doesn't match\n");
                             bwConsole.flush();
                         }
                         break;

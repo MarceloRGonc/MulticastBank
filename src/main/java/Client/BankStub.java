@@ -4,11 +4,9 @@ import Communication.*;
 import net.sf.jgcs.*;
 import net.sf.jgcs.Message;
 import net.sf.jgcs.jgroups.*;
-
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
-
 import Bank.Bank;
 
 import static Communication.Message.*;
@@ -47,12 +45,12 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
-    // Atualizar Número da conta
+    /** Update account number */
     public void setAccountId(int accountId){
         this.accountId = accountId;
     }
 
-    public synchronized int getBalance() {
+    public synchronized int getBalance(int accountId) {
         int res = -1;
         try {
             this.bOutput = new ByteArrayOutputStream();
@@ -85,12 +83,7 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    @Override
-    public int getBalance(int accountId) {
-        return 0;
-    }
-
-    public synchronized boolean move(int amount) {
+    public synchronized boolean move(int amount, Operation op) {
         boolean res = false;
 
         try {
@@ -121,11 +114,6 @@ public class BankStub implements Bank, MessageListener {
             e.printStackTrace();
         }
         return res;
-    }
-
-    @Override
-    public boolean move(Operation op) {
-        return false;
     }
 
     // Create Account
@@ -202,7 +190,7 @@ public class BankStub implements Bank, MessageListener {
     }
 
     @Override
-    public synchronized boolean transfer(int source,int dest, int amount) {
+    public synchronized boolean transfer(int source,int dest, int amount, Operation o) {
         boolean res = false;
 
         try {
@@ -235,8 +223,6 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    public boolean transfer(Operation op){ return true; }
-
     public synchronized void leave() {
         try {
             this.bOutput = new ByteArrayOutputStream();
@@ -266,7 +252,7 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
-    public synchronized String moveList(int nMoviments){
+    public synchronized String moveList(int accountId, int nMoviments){
         String res = "";
 
         try {
@@ -299,11 +285,6 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    public synchronized String moveList(int accountId, int nMoviments){
-        return "";
-    }
-
-
     public synchronized Object onMessage(Message msg) {
         ObjectInputStream oisHere = null;
         try {
@@ -329,7 +310,8 @@ public class BankStub implements Bank, MessageListener {
                 this.createLoginResponse = (CreateLogin) res;
 
                 if( this.createLoginResponse.getVMID().equals(vmid)
-                        && wMsg.contains(this.createLoginResponse.getMsgNumber()) && !this.createLoginResponse.getControl()) {
+                        && wMsg.contains(this.createLoginResponse.getMsgNumber())
+                        && !this.createLoginResponse.getControl()) {
 
                     notify();
                     System.out.println("[" + this.createLoginResponse.getMsgNumber()  + "]" + "Receive response!");

@@ -1,27 +1,31 @@
 package Communication;
 
-import Bank.Bank;
+import Bank.BankImpl;
 
 public class StateTransfer extends Message {
 
     /** Message identification */
-    private int msgNumber;
+    private String vmid;
     private Type op;
-    private Bank bank;
+    private BankImpl bank;
 
-    public StateTransfer(Type op, int n, Bank b) {
-        this.msgNumber = n;
+    public StateTransfer(Type op, String n, BankImpl b) {
+        this.vmid = n;
         this.op = op;
         this.bank = b;
     }
 
+    public StateTransfer(Type op, String vmid) {
+        this.vmid = vmid;
+        this.op = op;
+        this.bank = null;
+    }
+
     public Type getType() { return this.op; }
 
-    public String getVMID() { return String.valueOf(this.msgNumber); }
+    public String getVMID() { return String.valueOf(this.vmid); }
 
-    public int getMsgNumber() { return this.msgNumber; }
-
-    public Bank getBank(){
+    public BankImpl getBank(){
         return bank;
     }
 }
