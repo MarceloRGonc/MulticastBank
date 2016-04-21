@@ -67,14 +67,16 @@ public class Account {
     }
 
     public String getMoves(int nMoviments){
-        int total = operations.size();
-        String res="";
-        res += "Account: " + this.accountId + "\n";
+
+        int total = this.operations.size();
+        StringBuilder s = new StringBuilder();
+        s.append("Account: " + this.accountId + "\n");
+
         while (nMoviments > 0 && total > 0){
-            res += operations.get(total-1).toString();
+            s.append(operations.get(total-1).toString());
             total--;
             nMoviments--;
         }
-        return res;
+        return s.toString();
     }
 }
