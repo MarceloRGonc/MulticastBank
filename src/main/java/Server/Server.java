@@ -35,7 +35,6 @@ public class Server implements MessageListener, MembershipListener {
     private boolean keep = false;
     private ArrayList<Communication.Message> keepMessages = new ArrayList<>();
 
-
     public Server(JGroupsGroup group, Protocol p) {
         try {
             this.state = 1;
@@ -119,14 +118,15 @@ public class Server implements MessageListener, MembershipListener {
 
             CreateLogin clres;
             if (keep && receive instanceof Operation){
-                keepMessages.add(keepCounter++,receive);
-            } else if(receive instanceof Operation) {
+                keepMessages.add(keepCounter,receive);
+                keepCounter++;
+            } else if(state != 1 && receive instanceof Operation) {
 
                 Operation op = (Operation) receive;
                 doOperations(op);
 
             }
-            else if(receive instanceof CreateLogin) {
+            else if(state != 1 && receive instanceof CreateLogin) {
                 CreateLogin cl = (CreateLogin) receive;
 
                 switch (cl.getType()) {
@@ -154,7 +154,6 @@ public class Server implements MessageListener, MembershipListener {
                         if(state != 1) {
                             StateTransfer opt = new StateTransfer(Type.SENDSTATE, vmid, bank);
                             sendResponse(opt, false);
-                            return null;
                         } else if(state == 1){
                             System.out.println("Keeping messages");
                             keep = true;
@@ -166,14 +165,24 @@ public class Server implements MessageListener, MembershipListener {
                             System.out.println("Receive State! ");
                             this.bank = (BankImpl) st.getBank();
                             /** Make old operations */
-                            doOldOperations();
+                            boolean flag = false;
+                            /** Array sorted in arrival order */
+                            for(Communication.Message m : keepMessages){
+                                Operation op = (Operation) m;
+                                Operation lastOperation = bank.getLastOperation();
+                                if( op.getVMID().equals(lastOperation.getVMID()) && op.getMsgNumber() == lastOperation.getMsgNumber() ){
+                                    flag = true;
+                                    System.out.println("\nRepeated message!\n");
+                                    System.out.println("[" + op.getVMID().hashCode() + " - " + op.getMsgNumber() + "] ");
+                                } else if (flag) {
+                                    doOperations(op);
+                                }
+                            }
                             keep = false;
                             this.state = 2;
-                            return null;
                         }
                         break;
                 }
-
             }
             } catch (IOException ex) {
             ex.printStackTrace();
@@ -222,58 +231,46 @@ public class Server implements MessageListener, MembershipListener {
         System.exit(0);
     }
 
-    private void doOldOperations() throws IOException {
-        for(Communication.Message receive : keepMessages){
-            Operation op = (Operation) receive;
-            doOperations(op);
-        }
-
-    }
-
-    private void doOperations(Operation op) throws IOException{
+    private synchronized void doOperations(Operation op) throws IOException{
+        bank.setLastOperation(op);
         Response res;
+        boolean result;
         switch (op.getType()) {
             case MOVE:
-                if(state != 1) {
-                    boolean result = bank.move(op.getAmount(), op);
+                result = bank.move(op.getAmount(), op);
                     res = new Response(Type.MOVE, result, op.getVMID(),
                             op.getMsgNumber(),op.getOrigin());
                     sendResponse(res, true);
-                }
                 break;
 
             case TRANSFER:
-                if(state != 1) {
-                    boolean result = bank.transfer(op.getOrigin(), op.getDestination(), op.getAmount(), op);
+                     result = bank.transfer(op.getOrigin(), op.getDestination(), op.getAmount(), op);
                     res = new Response(Type.TRANSFER, result, op.getVMID(),
                             op.getMsgNumber(),op.getOrigin());
                     sendResponse(res, true);
-                }
+
                 break;
 
             case BALANCE:
-                if(state != 1) {
                     res = new Response(Type.BALANCE, bank.getBalance(op.getOrigin()),
                             op.getVMID(), op.getMsgNumber(),op.getOrigin());
                     sendResponse(res, true);
-                }
+
                 break;
 
             case MOVEMENTS:
-                if(state != 1) {
                     // op.getDestination() refere-se ao número de movimentos
                     String str = bank.moveList(op.getOrigin(),op.getDestination());
                     res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
                     sendResponse(res, true);
-                }
+
                 break;
 
             case LEAVE:
-                if(state != 1) {
                     res = new Response(Type.LEAVE, op.getVMID(),
                             op.getMsgNumber(),op.getDestination());
                     sendResponse(res, false);
-                }
+
                 break;
         }
     }

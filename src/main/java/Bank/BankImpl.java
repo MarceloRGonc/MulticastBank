@@ -6,6 +6,15 @@ import java.util.*;
 
 public class BankImpl implements Bank, Serializable{
 
+    public Operation lastOperation;
+
+    public void setLastOperation(Operation p) {
+        lastOperation = p;
+    }
+    public Operation getLastOperation() {
+        return lastOperation;
+    }
+
     private int count = 0;
     public void add() { count++; }
     public int getCount() { return count; }
@@ -47,7 +56,7 @@ public class BankImpl implements Bank, Serializable{
         Account account = this.accounts.get(op.getOrigin());
 
         if ((account.getValue() + op.getAmount()) < 0) {
-            System.out.println("[BankImpl] ERROR!");
+            System.out.println("[BankImpl] Insufficient funds!");
             return false;
         }
 

@@ -28,7 +28,7 @@ public class BankStub implements Bank, MessageListener {
 
     private Response response = null;
     private CreateLogin createLoginResponse = null;
-    private static HashSet<Integer> wMsg = new HashSet<>();
+    private HashSet<Integer> wMsg = new HashSet<>();
 
     public BankStub() {
         try {
