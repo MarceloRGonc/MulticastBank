@@ -8,7 +8,7 @@ public class Tester {
         BankStub bank = new BankStub();
 
         bank.createAccount("123");
-        bank.setAccountId(0);
+        bank.setAccountIdNumber(0);
 
         float moves = 0;
         for (int i = 0; i < 500; i++) {
@@ -23,7 +23,7 @@ public class Tester {
         }
         System.out.println("Bank balance: " + bank.getBalance(0));
         System.out.println("Expected balance:: " + moves);
-        bank.leave();
+        bank.leave(0);
         return ;
     }
 }

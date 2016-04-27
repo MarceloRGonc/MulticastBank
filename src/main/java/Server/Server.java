@@ -1,6 +1,7 @@
 package Server;
 
 import Bank.BankImpl;
+import Bank.Data;
 import Communication.*;
 import net.sf.jgcs.*;
 import net.sf.jgcs.Message;
@@ -30,13 +31,19 @@ public class Server implements MessageListener, MembershipListener {
     /** Current state 1 - started now 2 - Updated */
     private int state;
 
+    /** DataBase */
+    private String nameDatabase;
+
     /** Store messages that arrived after the status request */
     private int keepCounter = 0;
     private boolean keep = false;
     private ArrayList<Communication.Message> keepMessages = new ArrayList<>();
 
-    public Server(JGroupsGroup group, Protocol p) {
+    public Server(JGroupsGroup group, Protocol p, String nameDatabase) {
         try {
+
+            this.nameDatabase = nameDatabase;
+
             this.state = 1;
             this.group = group;
             this.p = p;
@@ -54,23 +61,25 @@ public class Server implements MessageListener, MembershipListener {
     }
 
     public static void main(String[] args) {
-        try {
+        if(args.length == 1) {
+            try {
 
-            bank = new BankImpl();
+                bank = new BankImpl(args[0]);
 
-            System.out.println("[Server] Server started");
+                System.out.println("[Server] Server started");
 
-            JGroupsProtocolFactory pf = new JGroupsProtocolFactory();
-            group = new JGroupsGroup("Bank");
-            p = pf.createProtocol();
-            new Server(group, p);
-            while (true) {
-                Thread.sleep(10000);
+                JGroupsProtocolFactory pf = new JGroupsProtocolFactory();
+                group = new JGroupsGroup("Bank");
+                p = pf.createProtocol();
+                new Server(group, p, args[0]);
+                while (true) {
+                    Thread.sleep(10000);
+                }
+            } catch (GroupException ex) {
+                ex.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (GroupException ex){
-            ex.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
@@ -102,10 +111,9 @@ public class Server implements MessageListener, MembershipListener {
         }
 
         dSession.multicast(toSend, new JGroupsService(), null);
-        bank.add();
 
         if (!flag) {
-            System.out.println("Movements: " + bank.getCount());
+            //System.out.println("Movements: " + bank.getCount());
         }
     }
 
@@ -132,7 +140,7 @@ public class Server implements MessageListener, MembershipListener {
                 switch (cl.getType()) {
                     case REGISTER:
                         if(state != 1 && cl.getControl()) {
-                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(), bank.createAccount(cl.getPassword()), cl.getPassword(), false);
+                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(), bank.createAccount(cl.getPassword(),0), cl.getPassword(), false);
                             sendResponse(clres, true);
                         }
                         break;
@@ -152,7 +160,11 @@ public class Server implements MessageListener, MembershipListener {
                 switch (st.getType()) {
                     case ASKSTATE:
                         if(state != 1) {
-                            StateTransfer opt = new StateTransfer(Type.SENDSTATE, vmid, bank);
+                            /** Traz dados e devolve ao utilizador para este atualizar a sua BD */
+                            Data data = bank.exportData(st.getCreateLogin(),st.getOperation());
+
+                            /** insert data */
+                            StateTransfer opt = new StateTransfer(Type.SENDSTATE, vmid, data);
                             sendResponse(opt, false);
                         } else if(state == 1){
                             System.out.println("Keeping messages");
@@ -163,18 +175,23 @@ public class Server implements MessageListener, MembershipListener {
                     case SENDSTATE:
                         if(state == 1) {
                             System.out.println("Receive State! ");
-                            this.bank = (BankImpl) st.getBank();
-                            /** Make old operations */
-                            boolean flag = false;
+
+                            Data data = st.getBank();
+
+                            /** atualizar dados */
+                            bank.updateData(data);
+
                             /** Array sorted in arrival order */
                             for(Communication.Message m : keepMessages){
                                 Operation op = (Operation) m;
-                                Operation lastOperation = bank.getLastOperation();
-                                if( op.getVMID().equals(lastOperation.getVMID()) && op.getMsgNumber() == lastOperation.getMsgNumber() ){
-                                    flag = true;
+
+                                /** Verificar se mensagem já foi realizada */
+                                boolean bool = bank.operationRealized(op.getOrigin(),op.getMsgNumber());
+
+                                if( bool ){
                                     System.out.println("\nRepeated message!\n");
                                     System.out.println("[" + op.getVMID().hashCode() + " - " + op.getMsgNumber() + "] ");
-                                } else if (flag) {
+                                } else{
                                     doOperations(op);
                                 }
                             }
@@ -197,9 +214,16 @@ public class Server implements MessageListener, MembershipListener {
         try {
             List<SocketAddress> list = this.mSession.getMembership().getJoinedMembers();
 
+            /** Request state */
             if( state == 1 && (this.mSession.getMembership().getMembershipList().size() != 1)){
 
-                StateTransfer res = new StateTransfer(Type.ASKSTATE, vmid);
+                int cl = bank.lastAccountInserted();
+                int op = bank.lastMovimentInserted();
+
+                /* Envia para o grupo para informar que os ultimos dados que tem são estes */
+                StateTransfer res = new StateTransfer(Type.ASKSTATE, vmid,cl,op);
+                System.out.print("Last Account: " + cl);
+                System.out.print("\nLast Moviment: " + op + "\n");
 
                 for(SocketAddress s : list){
                     ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
@@ -228,11 +252,11 @@ public class Server implements MessageListener, MembershipListener {
     }
 
     public void onExcluded() {
+        this.bank.shutdown();
         System.exit(0);
     }
 
     private synchronized void doOperations(Operation op) throws IOException{
-        bank.setLastOperation(op);
         Response res;
         boolean result;
         switch (op.getType()) {
@@ -259,8 +283,8 @@ public class Server implements MessageListener, MembershipListener {
                 break;
 
             case MOVEMENTS:
-                    // op.getDestination() refere-se ao número de movimentos
-                    String str = bank.moveList(op.getOrigin(),op.getDestination());
+                    // op.getAmount()refere-se ao número de movimentos
+                    String str = bank.moveList(op.getOrigin(),op.getAmount());
                     res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
                     sendResponse(res, true);
 

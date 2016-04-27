@@ -67,8 +67,8 @@ public class Client {
                         }
 
                         /** Account exist*/
+                        bank.setAccountIdNumber(accountId);
                         String amount;
-                        bank.setAccountId(accountId);
                         while (!shutdown) {
                             printMenu2(accountId);
                             opt = brConsole.readLine().trim();
@@ -105,10 +105,10 @@ public class Client {
                                 case '3':
                                     bwConsole.write("Account Destination: ");
                                     bwConsole.flush();
-                                    String account1 = brConsole.readLine().trim();
+                                    String account1 = brConsole.readLine();
                                     bwConsole.write("Ammount: ");
                                     bwConsole.flush();
-                                    amount = brConsole.readLine().trim();
+                                    amount = brConsole.readLine();
 
                                     /** Verifies that the account 2 exists and that account 1 have money */
                                     if(accountId == Integer.parseInt(account1)){
@@ -132,8 +132,9 @@ public class Client {
                                 case '5':
                                     bwConsole.write("Moviments: ");
                                     bwConsole.flush();
-                                    String nMoviments = brConsole.readLine().trim();
+                                    String nMoviments = brConsole.readLine();
                                     int movimentos = Integer.parseInt(nMoviments);
+
                                     if (movimentos > 0){
                                         bwConsole.write("[Response] \n");
                                         bwConsole.write(bank.moveList(accountId, movimentos));
@@ -147,7 +148,7 @@ public class Client {
 
                                 case '0':
                                     shutdown = true;
-                                    bank.leave();
+                                    bank.leave(accountId);
                                     bwConsole.write("[Response] See you next time\n");
                                     bwConsole.flush();
                                     break;
