@@ -1,16 +1,12 @@
 package Bank;
 
-import Communication.CreateLogin;
-import org.apache.derby.jdbc.EmbeddedXADataSource;
-
 import Communication.Operation;
+import org.apache.derby.jdbc.EmbeddedXADataSource;
 
 import javax.sql.XAConnection;
 import java.io.Serializable;
 import java.sql.*;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.*;
+import java.util.Vector;
 
 public class BankImpl implements Bank, Serializable{
 
@@ -459,7 +455,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Operation realized */
-    public boolean operationRealized(int accountId,int msg){
+    public boolean operationRealized(int accountId, int msg){
         boolean r = false;
         try
         {
@@ -473,7 +469,10 @@ public class BankImpl implements Bank, Serializable{
             results.close();
             stmt.close();
         }
-        catch (SQLException sqlExcept) {}
+        catch (SQLException sqlExcept) {
+
+
+        }
 
         return r;
     }

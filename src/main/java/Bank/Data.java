@@ -3,7 +3,7 @@ package Bank;
 import Communication.Operation;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Vector;
 
 public class Data implements Serializable{
 

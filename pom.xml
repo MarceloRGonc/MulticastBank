@@ -60,6 +60,11 @@
             <artifactId>derby</artifactId>
             <version>10.12.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations-java5</artifactId>
+            <version>RELEASE</version>
+        </dependency>
 
     </dependencies>
 

@@ -1,30 +1,33 @@
 package Client;
 
-import Communication.*;
+import Bank.Bank;
+import Communication.CreateLogin;
+import Communication.Operation;
+import Communication.Response;
 import net.sf.jgcs.*;
-import net.sf.jgcs.Message;
-import net.sf.jgcs.jgroups.*;
+import net.sf.jgcs.jgroups.JGroupsGroup;
+import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
+import net.sf.jgcs.jgroups.JGroupsService;
+
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
-import Bank.Bank;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static Communication.Message.*;
+import static Communication.Message.Type;
 
 public class BankStub implements Bank, MessageListener {
-
-    private ObjectOutputStream output;
-    private DataSession dSession = null;
-    private ByteArrayOutputStream bOutput = null;
 
     /** Identification */
     private static final String vmid = new VMID().toString();
 
+    private DataSession dSession = null;
+
     /** Message counter */
     private static int count = 0;
 
-    private Response response = null;
-    private CreateLogin createLoginResponse = null;
+    private ConcurrentHashMap<Integer,Response> responses;
+    private ConcurrentHashMap<Integer,CreateLogin> clResponses;
     private HashSet<Integer> wMsg = new HashSet<>();
 
     /** Number accountId */
@@ -42,6 +45,8 @@ public class BankStub implements Bank, MessageListener {
             Protocol p = pf.createProtocol();
             this.dSession = p.openDataSession(group);
             this.dSession.setMessageListener(this);
+            this.responses = new ConcurrentHashMap<>();
+            this.clResponses = new ConcurrentHashMap<>();
 
             ControlSession cs = p.openControlSession(group);
             cs.join();
@@ -53,27 +58,29 @@ public class BankStub implements Bank, MessageListener {
     public synchronized int getBalance(int accountId) {
         int res = -1;
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             Communication.Operation r = new Communication.Operation(Type.BALANCE, vmid, count, accountId);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
-            this.output.writeObject(r);
+            output.writeObject(r);
 
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.response = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.response == null) {
+            while (!responses.containsKey(i)) {
                 wait();
             }
 
-            res = this.response.getAmount();
+            res = responses.get(i).getAmount();
+            responses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -87,26 +94,28 @@ public class BankStub implements Bank, MessageListener {
         boolean res = false;
 
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             Communication.Operation r = new Communication.Operation(Type.MOVE, vmid, count, this.accountIdNumber, amount);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
-            this.output.writeObject(r);
+            output.writeObject(r);
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.response = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.response == null) {
+            while (!responses.containsKey(i)) {
                 wait();
             }
 
-            res = this.response.getResponse();
+            res = responses.get(i).getResponse();
+            responses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -121,30 +130,31 @@ public class BankStub implements Bank, MessageListener {
     public synchronized int createAccount(String password) {
         int res = -1;
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
             Communication.CreateLogin r = new Communication.CreateLogin(Type.REGISTER, vmid, count, 0, password,true);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
-            this.output.writeObject(r);
+            output.writeObject(r);
 
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
 
-            this.createLoginResponse = null;
             dSession.multicast(msg, new JGroupsService(), null);
 
             // Espera resposta
-            while (this.createLoginResponse == null) {
+            while (!clResponses.containsKey(i)) {
                 wait();
             }
 
-            res = this.createLoginResponse.getAccount();
+            res = clResponses.get(i).getAccount();
+            clResponses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -158,28 +168,30 @@ public class BankStub implements Bank, MessageListener {
     public synchronized boolean login(int accountId, String password) {
         boolean bool = false;
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
             Communication.CreateLogin r = new Communication.CreateLogin(Type.LOGIN, vmid, count, accountId, password,true);
 
             output.writeObject(r);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.createLoginResponse = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.createLoginResponse == null) {
+            while (!clResponses.containsKey(i)) {
                 wait();
             }
 
-            bool = this.createLoginResponse.getSucess();
+            bool = clResponses.get(i).getSucess();
+            clResponses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -194,26 +206,28 @@ public class BankStub implements Bank, MessageListener {
         boolean res = false;
 
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             Communication.Operation r = new Communication.Operation(Type.TRANSFER, vmid, count, source, dest, amount);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
-            this.output.writeObject(r);
+            output.writeObject(r);
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.response = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.response == null) {
+            while (!responses.containsKey(i)) {
                 wait();
             }
 
-            res = this.response.getResponse();
+            res = responses.get(i).getResponse();
+            responses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -225,25 +239,28 @@ public class BankStub implements Bank, MessageListener {
 
     public synchronized void leave(int accountId) {
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             Communication.Operation r = new Communication.Operation(Type.LEAVE, vmid, count, accountId);
 
             output.writeObject(r);
 
-            wMsg.add(count++);
+            int i = count++;
+            addWMsg(i);
 
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.response = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.response == null) {
+            while (!responses.containsKey(i)) {
                 wait();
             }
+
+            responses.remove(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -256,27 +273,27 @@ public class BankStub implements Bank, MessageListener {
         String res = "";
 
         try {
-            this.bOutput = new ByteArrayOutputStream();
-            this.output = new ObjectOutputStream(this.bOutput);
+            ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
+            ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
             Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, accountId, nMoviments);
+            int i = count++;
+            addWMsg(i);
 
-            wMsg.add(count++);
-
-            this.output.writeObject(r);
+            output.writeObject(r);
             byte[] data = bOutput.toByteArray();
 
             Message msg = dSession.createMessage();
             msg.setPayload(data);
-            this.response = null;
+
             dSession.multicast(msg, new JGroupsService(), null);
 
-            while (this.response == null) {
+            while (!responses.containsKey(i)) {
                 wait();
             }
 
-            res = this.response.getResult();
-
+            res = responses.get(i).getResult();
+            responses.remove(i);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -288,38 +305,34 @@ public class BankStub implements Bank, MessageListener {
     public synchronized Object onMessage(Message msg) {
         ObjectInputStream oisHere = null;
         try {
-
             ByteArrayInputStream bInput = new ByteArrayInputStream(msg.getPayload());
             oisHere = new ObjectInputStream(bInput);
             Communication.Message res = (Communication.Message) oisHere.readObject();
 
             if(res instanceof Communication.Response) {
 
-                this.response = (Response) res;
+                Response r = (Response) res;
 
-                if( this.response.getVMID().equals(vmid)
-                        && wMsg.contains(this.response.getMsgNumber())) {
+                if( r.getVMID().equals(vmid) && wMsg.contains(r.getMsgNumber())) {
 
+                    responses.put(r.getMsgNumber(), r);
                     notify();
-                    System.out.println("[" + this.response.getMsgNumber()  + "]" + "Receive response!");
-                    wMsg.remove(this.response.getMsgNumber());
+                    System.out.println("[" + r.getMsgNumber()  + "]" + "Receive response!");
+                    removeWMsg(r.getMsgNumber());
                 }
             }
             else if(res instanceof CreateLogin) {
 
-                this.createLoginResponse = (CreateLogin) res;
+                CreateLogin clR = (CreateLogin) res;
 
-                if( this.createLoginResponse.getVMID().equals(vmid)
-                        && wMsg.contains(this.createLoginResponse.getMsgNumber())
-                        && !this.createLoginResponse.getControl()) {
+                if( clR.getVMID().equals(vmid) && wMsg.contains(clR.getMsgNumber()) && !clR.getControl()) {
 
+                    clResponses.put(clR.getMsgNumber(), clR);
                     notify();
-                    System.out.println("[" + this.createLoginResponse.getMsgNumber()  + "]" + "Receive response!");
-                    wMsg.remove(this.createLoginResponse.getMsgNumber());
+                    System.out.println("[" + clR.getMsgNumber()  + "]" + "Receive response!");
+                    removeWMsg(clR.getMsgNumber());
                 }
             }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -332,5 +345,13 @@ public class BankStub implements Bank, MessageListener {
             }
         }
         return null;
+    }
+
+    private synchronized void addWMsg(Integer msg){
+        wMsg.add(msg);
+    }
+
+    private synchronized void removeWMsg(Integer msg){
+        wMsg.remove(msg);
     }
 }

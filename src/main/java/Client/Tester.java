@@ -7,8 +7,8 @@ public class Tester {
     public static void main(String[] args) {
         BankStub bank = new BankStub();
 
-        bank.createAccount("123");
-        bank.setAccountIdNumber(0);
+        int r = bank.createAccount("1234");
+        bank.setAccountIdNumber(r);
 
         float moves = 0;
         for (int i = 0; i < 500; i++) {
@@ -17,13 +17,14 @@ public class Tester {
             int value = rand.nextInt(10000)-5000;
 
             boolean status = bank.move(value, null);
+
             if (status) {
                 moves += value;
             }
         }
-        System.out.println("Bank balance: " + bank.getBalance(0));
+        System.out.println("Bank balance: " + bank.getBalance(r));
         System.out.println("Expected balance:: " + moves);
-        bank.leave(0);
+        bank.leave(r);
         return ;
     }
 }

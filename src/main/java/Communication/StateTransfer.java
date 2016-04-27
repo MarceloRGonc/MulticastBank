@@ -1,6 +1,5 @@
 package Communication;
 
-import Bank.BankImpl;
 import Bank.Data;
 
 public class StateTransfer extends Message {
