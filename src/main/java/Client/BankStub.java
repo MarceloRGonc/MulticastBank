@@ -17,9 +17,6 @@ public class BankStub implements Bank, MessageListener {
     private DataSession dSession = null;
     private ByteArrayOutputStream bOutput = null;
 
-    /** Account id */
-    private static int accountId;
-
     /** Identification */
     private static final String vmid = new VMID().toString();
 
@@ -29,6 +26,14 @@ public class BankStub implements Bank, MessageListener {
     private Response response = null;
     private CreateLogin createLoginResponse = null;
     private HashSet<Integer> wMsg = new HashSet<>();
+
+    /** Number accountId */
+    private int accountIdNumber;
+
+    /** Set AccountId */
+    public void setAccountIdNumber(int accountId){
+        this.accountIdNumber = accountId;
+    }
 
     public BankStub() {
         try {
@@ -45,18 +50,13 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
-    /** Update account number */
-    public void setAccountId(int accountId){
-        this.accountId = accountId;
-    }
-
     public synchronized int getBalance(int accountId) {
         int res = -1;
         try {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.BALANCE, vmid, count, this.accountId);
+            Communication.Operation r = new Communication.Operation(Type.BALANCE, vmid, count, accountId);
 
             wMsg.add(count++);
 
@@ -90,7 +90,7 @@ public class BankStub implements Bank, MessageListener {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.MOVE, vmid, count, this.accountId, amount);
+            Communication.Operation r = new Communication.Operation(Type.MOVE, vmid, count, this.accountIdNumber, amount);
 
             wMsg.add(count++);
 
@@ -223,12 +223,12 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    public synchronized void leave() {
+    public synchronized void leave(int accountId) {
         try {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.LEAVE, vmid, count, this.accountId);
+            Communication.Operation r = new Communication.Operation(Type.LEAVE, vmid, count, accountId);
 
             output.writeObject(r);
 
@@ -259,7 +259,7 @@ public class BankStub implements Bank, MessageListener {
             this.bOutput = new ByteArrayOutputStream();
             this.output = new ObjectOutputStream(this.bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, this.accountId, nMoviments);
+            Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, accountId, nMoviments);
 
             wMsg.add(count++);
 

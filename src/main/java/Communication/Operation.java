@@ -17,6 +17,14 @@ public class Operation extends Message {
     /** Amount involved in the operation */
     private int amount;
 
+    /** moviments */
+    private int id;
+    private int accountid;
+    private String operation;
+    private int balance;
+
+    /** Construtor */
+
     public Operation(Type op, String vmid, int msgNumber, int orig) {
         this.vmid = vmid;
         this.msgNumber = msgNumber;
@@ -53,6 +61,14 @@ public class Operation extends Message {
         this.amount = op.getAmount();
     }
 
+    public Operation(int id, int accountid, int msg, String operation,int balance){
+        this.id = id;
+        this.accountid = accountid;
+        this.msgNumber = msg;
+        this.operation = operation;
+        this.balance = balance;
+    }
+
     public Type getType() { return this.type; }
 
     public String getVMID() { return this.vmid; }
@@ -64,6 +80,14 @@ public class Operation extends Message {
     public int getOrigin() { return this.orig; }
 
     public int getDestination() { return this.dest; }
+
+    public int getId(){ return this.id; }
+
+    public int getAccountid(){ return this.accountid; }
+
+    public String getOperation(){ return this.operation; }
+
+    public int getBalance(){ return this.balance; }
 
     public String toString(){
         String res = "";

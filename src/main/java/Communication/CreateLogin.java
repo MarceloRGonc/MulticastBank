@@ -17,6 +17,9 @@ public class CreateLogin extends Message {
     private int account;
     private String password;
 
+    /** balance */
+    private int balance;
+
     /** login sucess */
     private boolean sucess;
 
@@ -42,6 +45,12 @@ public class CreateLogin extends Message {
         this.control = control;
     }
 
+    public CreateLogin(int account, String password, int balance) {
+        this.account = account;
+        this.password = password;
+        this.balance = balance;
+    }
+
     public Type getType() { return this.type; }
 
     public String getVMID() { return this.vmid; }
@@ -55,4 +64,6 @@ public class CreateLogin extends Message {
     public boolean getSucess(){ return this.sucess; }
 
     public boolean getControl() { return this.control; }
+
+    public int getBalance(){ return this.balance; }
 }
