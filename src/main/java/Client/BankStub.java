@@ -51,7 +51,7 @@ public class BankStub implements Bank, MessageListener {
             ControlSession cs = p.openControlSession(group);
             cs.join();
         } catch (IOException ex) {
-            System.out.println("Something went wrong!");
+            ex.printStackTrace();
         }
     }
 
@@ -125,8 +125,6 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    // Create Account
-    // -1 erro
     public synchronized int createAccount(String password) {
         int res = -1;
         try {
@@ -164,14 +162,12 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
-    // Login
     public synchronized boolean login(int accountId, String password) {
         boolean bool = false;
         try {
             ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
             ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
-            // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
             Communication.CreateLogin r = new Communication.CreateLogin(Type.LOGIN, vmid, count, accountId, password,true);
 
             output.writeObject(r);

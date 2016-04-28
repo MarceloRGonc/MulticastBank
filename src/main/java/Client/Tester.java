@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Tester {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         BankStub bank = new BankStub();
 
         int r = bank.createAccount("1234");
@@ -22,8 +22,9 @@ public class Tester {
                 moves += value;
             }
         }
+        Thread.sleep(2);
         System.out.println("Bank balance: " + bank.getBalance(r));
-        System.out.println("Expected balance:: " + moves);
+        System.out.println("Expected balance: " + moves);
         bank.leave(r);
         return ;
     }

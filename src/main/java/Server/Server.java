@@ -13,7 +13,6 @@ import net.sf.jgcs.jgroups.JGroupsService;
 import java.io.*;
 import java.net.SocketAddress;
 import java.rmi.dgc.VMID;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -101,14 +100,14 @@ public class Server implements MessageListener, MembershipListener {
         if(obj instanceof Communication.Response) {
             vmid = ((Response) obj).getVMID();
             msgNumber = ((Response) obj).getMsgNumber();
-            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
+           /** System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
                     + "Sent response! Account: " + ((Response) obj).getAccountId() +
-                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));
+                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));*/
         } else if(obj instanceof Communication.CreateLogin) {
             vmid = ((CreateLogin) obj).getVMID();
             msgNumber = ((CreateLogin) obj).getMsgNumber();
-            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
-                    + "Sent response! Account: " + ((CreateLogin) obj).getAccount() );
+            /**System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
+                    + "Sent response! Account: " + ((CreateLogin) obj).getAccount() );*/
         } else if(obj instanceof Communication.StateTransfer) {
             System.out.println("[StateTransfer] Sent current state!");
         }
@@ -158,11 +157,10 @@ public class Server implements MessageListener, MembershipListener {
                 switch (st.getType()) {
                     case ASKSTATE:
                         if(state != 1) {
-                            /** Traz dados e devolve ao utilizador para este atualizar a sua BD */
                             Data data = bank.exportData(st.getCreateLogin(),st.getOperation());
 
-                            /** insert data */
-                            StateTransfer opt = new StateTransfer(Type.SENDSTATE, vmid, data);
+                            /** Insert data */
+                            StateTransfer opt = new StateTransfer(Type.RECEIVESTATE, vmid, data);
                             sendResponse(opt, msg.getSenderAddress());
                         } else if(state == 1){
                             System.out.println("Keeping messages");
@@ -170,13 +168,13 @@ public class Server implements MessageListener, MembershipListener {
                         }
                         break;
 
-                    case SENDSTATE:
+                    case RECEIVESTATE:
                         if(state == 1) {
                             System.out.println("Receive State! ");
 
                             Data data = st.getBank();
 
-                            /** atualizar dados */
+                            /** Update data */
                             bank.updateData(data);
 
                             /** Array sorted in arrival order */
@@ -187,12 +185,11 @@ public class Server implements MessageListener, MembershipListener {
                                 if(op == null){
                                     flag = false;
                                 } else {
-                                    /** Verificar se mensagem já foi realizada */
+                                    /** Verifies if message was already realized */
                                     boolean bool = bank.operationRealized(op.getOrigin(), op.getMsgNumber());
 
                                     if (bool) {
-                                        System.out.println("\nRepeated message!\n");
-                                        System.out.println("[" + op.getVMID().hashCode() + " - " + op.getMsgNumber() + "] ");
+                                        System.out.println("Repeated message!");
                                     } else {
                                         doOperations(op, msg.getSenderAddress());
                                     }
@@ -204,12 +201,11 @@ public class Server implements MessageListener, MembershipListener {
                         break;
                 }
             }
-            } catch (IOException ex) {
+        } catch (IOException ex) {
             ex.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
@@ -274,7 +270,6 @@ public class Server implements MessageListener, MembershipListener {
                     res = new Response(Type.TRANSFER, result, op.getVMID(),
                             op.getMsgNumber(),op.getOrigin());
                     sendResponse(res, dest);
-
                 break;
 
             case BALANCE:

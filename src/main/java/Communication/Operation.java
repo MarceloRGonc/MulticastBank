@@ -17,7 +17,7 @@ public class Operation extends Message {
     /** Amount involved in the operation */
     private int amount;
 
-    /** moviments */
+    /** Moviments */
     private int id;
     private int accountid;
     private String operation;

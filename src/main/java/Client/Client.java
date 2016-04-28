@@ -195,10 +195,9 @@ public class Client {
                         break;
                 }
             }
-
             System.exit(0);
-
         } catch (IOException ex) {
+            ex.printStackTrace();
             System.out.println("[Client] IOexception");
         }
     }

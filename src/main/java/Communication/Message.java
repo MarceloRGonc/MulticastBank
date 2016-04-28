@@ -14,7 +14,7 @@ public abstract class Message implements Serializable {
 
         /** State transfer */
         ASKSTATE,
-        SENDSTATE,
+        RECEIVESTATE,
 
         /** User options */
         REGISTER,

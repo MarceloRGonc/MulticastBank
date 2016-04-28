@@ -28,7 +28,7 @@ public class Data implements Serializable{
         this.moviments.add(op);
     }
 
-    /** Obter accounts */
+    /** Get accounts */
     public Vector<String> getAccounts(){
         Vector<String> r = new Vector<String>();
         for(String str : this.accounts)
@@ -36,7 +36,7 @@ public class Data implements Serializable{
         return r;
     }
 
-    /** Obter Moviments */
+    /** Get Moviments */
     public Vector<Operation> getOperations(){
         Vector<Operation> r = new Vector<>();
         for(Operation op : this.moviments)
