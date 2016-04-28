@@ -371,7 +371,7 @@ public class BankImpl implements Bank, Serializable{
                         ps.setString(4,operationAccount2);
                         ps.setInt(5,balanceAccount2);
                         ps.executeUpdate();
-                        
+
                         addMoviment();
 
                         ps.close();

@@ -98,9 +98,9 @@ public class Server implements MessageListener, MembershipListener {
         if(obj instanceof Communication.Response) {
             vmid = ((Response) obj).getVMID();
             msgNumber = ((Response) obj).getMsgNumber();
-           /** System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
+            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
                     + "Sent response! Account: " + ((Response) obj).getAccountId() +
-                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));*/
+                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));
         } else if(obj instanceof Communication.CreateLogin) {
             vmid = ((CreateLogin) obj).getVMID();
             msgNumber = ((CreateLogin) obj).getMsgNumber();

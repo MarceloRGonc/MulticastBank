@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Thu Apr 28 17:20:28 WEST 2016:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-5dab-e862-000006ad7ff0 
-on database directory /home/brunorebelo/IdeaProjects/MulticastBank/Braga with class loader sun.misc.Launcher$AppClassLoader@45ee12a7 
+Thu Apr 28 23:14:10 WEST 2016:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-5eef-bc35-000006ad80a8 
+on database directory /home/brunorebelo/IdeaProjects/MulticastBank/Coimbra with class loader sun.misc.Launcher$AppClassLoader@45ee12a7 
 Loaded from file:/home/brunorebelo/.m2/repository/org/apache/derby/derby/10.12.1.1/derby-10.12.1.1.jar
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_77-b03
