@@ -120,7 +120,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Init BD */
-    private synchronized void initBD(){
+    private void initBD(){
         if(createConnection() == true){
             boolean flag = false;
             if(!createSchema()){
@@ -139,7 +139,7 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    private synchronized void getCounters() {
+    private void getCounters() {
         try {
             Statement stmt = conn.createStatement();
 
@@ -185,7 +185,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Insert accounts */
-    public synchronized int createAccount(String password,int valor){
+    public int createAccount(String password,int valor){
         int r = -1;
         try
         {
@@ -193,13 +193,13 @@ public class BankImpl implements Bank, Serializable{
 
             PreparedStatement ps = conn.prepareStatement(sql);
 
-            ps.setInt(1,getCountAccount());
+            r = getCountAccount();
+
+            ps.setInt(1,r);
             ps.setString(2,password);
             ps.setInt(3,valor);
-
             ps.executeUpdate();
 
-            r= getCountAccount();
             addAccount();
 
             ps.close();
@@ -211,7 +211,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Login account */
-    public synchronized boolean loginAccount(int accountID, String password){
+    public boolean loginAccount(int accountID, String password){
         boolean r = false;
         try
         {
@@ -235,7 +235,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Deposit or Withdraw */
-    public synchronized boolean move(int value, Operation op) {
+    public boolean move(int value, Operation op) {
         boolean r = false;
         try
         {
@@ -271,6 +271,7 @@ public class BankImpl implements Bank, Serializable{
                     ps.setString(4,operation);
                     ps.setInt(5,move);
                     ps.executeUpdate();
+
                     addMoviment();
 
                     ps.close();
@@ -288,7 +289,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** GetBalance */
-    public synchronized int getBalance(int accountId) {
+    public int getBalance(int accountId) {
         int r = -1;
         try {
             Statement stmt = conn.createStatement();
@@ -310,7 +311,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Transfer */
-    public synchronized boolean transfer(int source, int dest, int amount, Operation op){
+    public boolean transfer(int source, int dest, int amount, Operation op){
 
         boolean r = false;
         try {
@@ -352,6 +353,7 @@ public class BankImpl implements Bank, Serializable{
                         ps.setString(4,operationAccount1);
                         ps.setInt(5,move);
                         ps.executeUpdate();
+
                         addMoviment();
 
                         /** Account 2 */
@@ -369,6 +371,7 @@ public class BankImpl implements Bank, Serializable{
                         ps.setString(4,operationAccount2);
                         ps.setInt(5,balanceAccount2);
                         ps.executeUpdate();
+                        
                         addMoviment();
 
                         ps.close();
@@ -388,7 +391,7 @@ public class BankImpl implements Bank, Serializable{
 
 
     /** Get last N moviments */
-    public synchronized String moveList(int accountId, int nMoviments){
+    public String moveList(int accountId, int nMoviments){
         String r = "";
         try {
             Statement stmt = conn.createStatement();
@@ -422,7 +425,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Last account inserted */
-    public synchronized int lastAccountInserted(){
+    public int lastAccountInserted(){
         if(getCountAccount() == 1){
             return -1;
         }
@@ -432,7 +435,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Last moviment inserted */
-    public synchronized int lastMovimentInserted(){
+    public int lastMovimentInserted(){
        if(getCountMoviment() == 1) {
            return -1;
        }
@@ -442,7 +445,7 @@ public class BankImpl implements Bank, Serializable{
     }
 
     /** Operation realized */
-    public synchronized boolean operationRealized(int accountId, int msg){
+    public boolean operationRealized(int accountId, int msg){
         boolean r = false;
         try {
             Statement stmt = conn.createStatement();
