@@ -1,8 +1,5 @@
 package Communication;
 
-/**
- * Created by brunorebelo on 17/04/16.
- */
 
 public class CreateLogin extends Message {
 

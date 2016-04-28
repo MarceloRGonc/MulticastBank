@@ -18,9 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static Communication.Message.Type;
 
-/**
- * Created by MGonc on 15/02/16.
- */
+
 public class Server implements MessageListener, MembershipListener {
 
     /** Server identification */

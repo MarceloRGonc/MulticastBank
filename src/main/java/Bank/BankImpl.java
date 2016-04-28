@@ -266,12 +266,12 @@ public class BankImpl implements Bank, Serializable{
 
                     ps = conn.prepareStatement(sqlMove);
                     ps.setInt(1,getCountMoviment());
-                    addMoviment();
                     ps.setInt(2,op.getOrigin());
                     ps.setInt(3,op.getMsgNumber());
                     ps.setString(4,operation);
                     ps.setInt(5,move);
                     ps.executeUpdate();
+                    addMoviment();
 
                     ps.close();
 
@@ -347,12 +347,12 @@ public class BankImpl implements Bank, Serializable{
 
                         ps = conn.prepareStatement(sqlMove);
                         ps.setInt(1,getCountMoviment());
-                        addMoviment();
                         ps.setInt(2,op.getOrigin());
                         ps.setInt(3,op.getMsgNumber());
                         ps.setString(4,operationAccount1);
                         ps.setInt(5,move);
                         ps.executeUpdate();
+                        addMoviment();
 
                         /** Account 2 */
                         sqlUpdate = "update ACCOUNTS set balance = "
@@ -364,12 +364,12 @@ public class BankImpl implements Bank, Serializable{
 
                         ps = conn.prepareStatement(sqlMove);
                         ps.setInt(1,getCountMoviment());
-                        addMoviment();
                         ps.setInt(2,op.getDestination());
                         ps.setInt(3,op.getMsgNumber());
                         ps.setString(4,operationAccount2);
                         ps.setInt(5,balanceAccount2);
                         ps.executeUpdate();
+                        addMoviment();
 
                         ps.close();
 
@@ -516,10 +516,10 @@ public class BankImpl implements Bank, Serializable{
             try {
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1,Integer.parseInt(parts[0]));
-                addAccount();
                 ps.setString(2,parts[1]);
                 ps.setInt(3,Integer.parseInt(parts[2]));
                 ps.executeUpdate();
+                addAccount();
             }
             catch (SQLException sqlExcept){
                 sqlExcept.printStackTrace();
@@ -535,12 +535,12 @@ public class BankImpl implements Bank, Serializable{
             try {
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1,op.getId());
-                addMoviment();
                 ps.setInt(2,op.getAccountid());
                 ps.setInt(3,op.getMsgNumber());
                 ps.setString(4,op.getOperation());
                 ps.setInt(5,op.getBalance());
                 ps.executeUpdate();
+                addMoviment();
             }
             catch (SQLException sqlExcept){
                 sqlExcept.printStackTrace();
