@@ -2,7 +2,6 @@ package Bank;
 
 import Communication.Operation;
 import org.apache.derby.jdbc.EmbeddedXADataSource;
-
 import javax.sql.XAConnection;
 import java.io.Serializable;
 import java.sql.*;
@@ -396,22 +395,21 @@ public class BankImpl implements Bank, Serializable{
         try {
             Statement stmt = conn.createStatement();
 
-            /** Obter movimentos do accountId */
+            /** Get moviments from accountId */
             ResultSet result = stmt.executeQuery("select * from MOVIMENTS where accountid = " + accountId + " order by id DESC");
 
             StringBuilder s = new StringBuilder();
-            s.append("---\nMoviments\n");
+            s.append("\n--- Moviments ---\n");
 
             /** Moviments */
             while( (nMoviments != 0) && result.next()) {
-                s.append("Number Move: " + result.getInt(3));
+                s.append("Move id: " + result.getInt(3));
                 s.append("\nOperation: " + result.getString(4));
                 s.append("\nBalance: " + result.getInt(5));
-                s.append("\n");
+                s.append("- - - - - - - - -\n");
                 --nMoviments;
             }
-
-            s.append("---\n");
+            s.append("-----------------\n");
             r =  s.toString();
 
             result.close();
@@ -515,7 +513,8 @@ public class BankImpl implements Bank, Serializable{
 
         for(String str : accounts){
             parts = str.split(":");
-            sql = "Insert into ACCOUNTS(accountid,password,balance) values (?,?,?)";
+
+            sql = "INSERT into ACCOUNTS(accountid,password,balance) values (?,?,?)";
             try {
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1,Integer.parseInt(parts[0]));
@@ -533,9 +532,9 @@ public class BankImpl implements Bank, Serializable{
         Vector<Operation> moviments = data.getOperations();
 
         for(Operation op : moviments){
-
             sql = "Insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
             try {
+                doUpdate(op.getBalance(), op.getAccountid());
                 ps = conn.prepareStatement(sql);
                 ps.setInt(1,op.getId());
                 ps.setInt(2,op.getAccountid());
@@ -549,5 +548,12 @@ public class BankImpl implements Bank, Serializable{
                 sqlExcept.printStackTrace();
             }
         }
+    }
+
+    /** Update de balance from the account */
+    private void doUpdate(int bal, int id) throws SQLException {
+        Statement stmt = conn.createStatement();
+        String sqlUpdate = "UPDATE ACCOUNTS set balance = " + bal + " where accountid = " +  id;
+        stmt.execute(sqlUpdate);
     }
 }
