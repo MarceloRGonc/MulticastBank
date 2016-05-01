@@ -359,7 +359,7 @@ public class BankImpl implements Bank, Serializable{
                         /** Account 2 */
                         sqlUpdate = "update ACCOUNTS set balance = "
                                 + balanceAccount2 + " where accountid = " +  op.getDestination();
-                        sqlMove = "insert into MOVIMENTS(id,accountid,msg,operation,value) values (?,?,?,?,?)";
+                        sqlMove = "insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
 
                         ps = conn.prepareStatement(sqlUpdate);
                         ps.executeUpdate();
