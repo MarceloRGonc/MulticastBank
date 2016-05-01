@@ -61,7 +61,7 @@ public class Operation extends Message {
         this.amount = op.getAmount();
     }
 
-    public Operation(int id, int accountid, int msg, String operation,int balance){
+    public Operation(int id, int accountid, int msg, String operation, int balance){
         this.id = id;
         this.accountid = accountid;
         this.msgNumber = msg;

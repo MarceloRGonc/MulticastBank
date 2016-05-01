@@ -97,7 +97,7 @@ public class Client {
                                         bwConsole.write("[Response] Withdraw made\n");
                                         bwConsole.flush();
                                     } else {
-                                        bwConsole.write("[Response] Something went wrong!\n");
+                                        bwConsole.write("[Response] It doesn't have funds!\n");
                                         bwConsole.flush();
                                     }
                                     break;
@@ -119,7 +119,7 @@ public class Client {
                                         bwConsole.write("[Response] Transfer made!\n");
                                         bwConsole.flush();
                                     } else {
-                                        bwConsole.write("[Response] Something went wrong\n");
+                                        bwConsole.write("[Response] Impossible to perform transfer!\n");
                                         bwConsole.flush();
                                     }
                                     break;

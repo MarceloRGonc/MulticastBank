@@ -5,7 +5,6 @@ import java.io.Serializable;
 public abstract class Message implements Serializable {
 
     public enum Type {
-
         /** Operations */
         MOVE,
         MOVEMENTS,

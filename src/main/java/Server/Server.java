@@ -9,15 +9,11 @@ import net.sf.jgcs.annotation.PointToPoint;
 import net.sf.jgcs.jgroups.JGroupsGroup;
 import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
 import net.sf.jgcs.jgroups.JGroupsService;
-
 import java.io.*;
 import java.net.SocketAddress;
 import java.rmi.dgc.VMID;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 import static Communication.Message.Type;
-
 
 public class Server implements MessageListener, MembershipListener {
 
@@ -29,7 +25,10 @@ public class Server implements MessageListener, MembershipListener {
     private static JGroupsGroup group = null;
     private static Protocol p = null;
 
-    /** Current state 1 - started now 2 - Updated */
+    /** Current state:
+     *  1 - Out of date
+     *  2 - Updated
+     */
     private int state;
 
     /** DataBase */
@@ -63,7 +62,7 @@ public class Server implements MessageListener, MembershipListener {
     public static void main(String[] args) {
         if(args.length == 1) {
             try {
-                /** Args[0] name of the server */
+                /** Args[0] name of the server and corresponding data bases */
                 bank = new BankImpl(args[0]);
 
                 System.out.println("[Server] Server started");
@@ -83,6 +82,7 @@ public class Server implements MessageListener, MembershipListener {
         }
     }
 
+    /** Send Response to the destination */
     private synchronized void sendResponse(Object obj, SocketAddress dest) throws IOException {
         ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
         ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
@@ -101,11 +101,6 @@ public class Server implements MessageListener, MembershipListener {
             System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
                     + "Sent response! Account: " + ((Response) obj).getAccountId() +
                     " Balance: " + bank.getBalance(((Response) obj).getAccountId()));
-        } else if(obj instanceof Communication.CreateLogin) {
-            vmid = ((CreateLogin) obj).getVMID();
-            msgNumber = ((CreateLogin) obj).getMsgNumber();
-            /**System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
-                    + "Sent response! Account: " + ((CreateLogin) obj).getAccount() );*/
         } else if(obj instanceof Communication.StateTransfer) {
             System.out.println("[StateTransfer] Sent current state!");
         }
@@ -121,6 +116,7 @@ public class Server implements MessageListener, MembershipListener {
             Communication.Message receive = (Communication.Message) oInput.readObject();
 
             CreateLogin clres;
+
             if (keep && receive instanceof Operation){
                 keepMessages.add(receive);
             } else if(state != 1 && receive instanceof Operation) {
@@ -134,17 +130,18 @@ public class Server implements MessageListener, MembershipListener {
 
                 switch (cl.getType()) {
                     case REGISTER:
-                        if(state != 1 && cl.getControl()) {
-                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(), bank.createAccount(cl.getPassword(),0), cl.getPassword(), false);
+                        if(cl.getControl()) {
+                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(),
+                                    bank.createAccount(cl.getPassword(),0), cl.getPassword(), false);
                             sendResponse(clres, msg.getSenderAddress());
                         }
                         break;
 
                     case LOGIN:
-                        if(state != 1 && cl.getControl()) {
-
-                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(), cl.getAccount(), cl.getPassword(), bank.loginAccount(cl.getAccount(), cl.getPassword()), false);
-
+                        if(cl.getControl()) {
+                            clres = new CreateLogin(Type.REGISTER, cl.getVMID(), cl.getMsgNumber(),
+                                    cl.getAccount(), cl.getPassword(), bank.loginAccount(cl.getAccount(),
+                                    cl.getPassword()), false);
                             sendResponse(clres, msg.getSenderAddress());
                         }
                         break;
@@ -157,19 +154,18 @@ public class Server implements MessageListener, MembershipListener {
                         if(state != 1) {
                             Data data = bank.exportData(st.getCreateLogin(),st.getOperation());
 
-                            /** Insert data */
+                            /** Send Current State */
                             StateTransfer opt = new StateTransfer(Type.RECEIVESTATE, vmid, data);
                             sendResponse(opt, msg.getSenderAddress());
                         } else if(state == 1){
-                            System.out.println("Keeping messages");
+                            /** Saving messages to realized later */
+                            System.out.println("Saving messages");
                             keep = true;
                         }
                         break;
 
                     case RECEIVESTATE:
                         if(state == 1) {
-                            System.out.println("Receive State! ");
-
                             Data data = st.getBank();
 
                             /** Update data */
@@ -194,6 +190,7 @@ public class Server implements MessageListener, MembershipListener {
                                 }
                             }
                             keep = false;
+                            System.out.print("Status updated");
                             this.state = 2;
                         }
                         break;
@@ -209,18 +206,15 @@ public class Server implements MessageListener, MembershipListener {
 
     public synchronized void onMembershipChange() {
         try {
-            List<SocketAddress> list = this.mSession.getMembership().getJoinedMembers();
-
             /** Request state */
             if( state == 1 && (this.mSession.getMembership().getMembershipList().size() != 1)){
 
                 int cl = bank.lastAccountInserted();
                 int op = bank.lastMovimentInserted();
 
-                /* Envia para o grupo para informar que os ultimos dados que tem são estes */
+                /** Send to the froup the current state asking for the new */
                 StateTransfer res = new StateTransfer(Type.ASKSTATE, vmid,cl,op);
-                System.out.print("Last Account: " + cl);
-                System.out.print("\nLast Moviment: " + op + "\n");
+                System.out.print("Last Account: " + cl + "; Last Moviment: " + op + ";\n");
 
                 ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
                 ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
@@ -229,8 +223,9 @@ public class Server implements MessageListener, MembershipListener {
                 byte[] data = bOuput.toByteArray();
                 Message toSend = dSession.createMessage();
                 toSend.setPayload(data);
-                System.out.println("[ - " + res.getVMID()  + "] "
-                        + "Ask State!");
+
+                System.out.println("[ - " + res.getVMID()  + "] " + "Ask State!");
+
                 dSession.multicast(toSend, new JGroupsService(), null);
 
             } else if(this.mSession.getMembership().getMembershipList().size() == 1){
@@ -244,7 +239,6 @@ public class Server implements MessageListener, MembershipListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public void onExcluded() {
@@ -252,45 +246,40 @@ public class Server implements MessageListener, MembershipListener {
         System.exit(0);
     }
 
+    /** Performs operation and sends response to the destination */
     private synchronized void doOperations(Operation op, SocketAddress dest) throws IOException{
         Response res;
         boolean result;
         switch (op.getType()) {
             case MOVE:
                 result = bank.move(op.getAmount(), op);
-                    res = new Response(Type.MOVE, result, op.getVMID(),
-                            op.getMsgNumber(), op.getOrigin());
-                    sendResponse(res, dest);
+                res = new Response(Type.MOVE, result, op.getVMID(), op.getMsgNumber(), op.getOrigin());
+                sendResponse(res, dest);
                 break;
 
             case TRANSFER:
-                     result = bank.transfer(op.getOrigin(), op.getDestination(), op.getAmount(), op);
-                    res = new Response(Type.TRANSFER, result, op.getVMID(),
-                            op.getMsgNumber(),op.getOrigin());
+                result = bank.transfer(op.getOrigin(), op.getDestination(), op.getAmount(), op);
+                res = new Response(Type.TRANSFER, result, op.getVMID(), op.getMsgNumber(),op.getOrigin());
                     sendResponse(res, dest);
                 break;
 
             case BALANCE:
-                    res = new Response(Type.BALANCE, bank.getBalance(op.getOrigin()),
-                            op.getVMID(), op.getMsgNumber(),op.getOrigin());
-                    sendResponse(res, dest);
-                    System.out.println("[" + vmid.hashCode() + " - " + res.getMsgNumber() + "] "
+                res = new Response(Type.BALANCE, bank.getBalance(op.getOrigin()), op.getVMID(), op.getMsgNumber(), op.getOrigin());
+                sendResponse(res, dest);
+                System.out.println("[" + vmid.hashCode() + " - " + res.getMsgNumber() + "] "
                         + "Sent response! Account Balance: " + bank.getBalance(res.getAccountId()));
                 break;
 
             case MOVEMENTS:
-                    // op.getAmount()refere-se ao número de movimentos
-                    String str = bank.moveList(op.getOrigin(),op.getAmount());
-                    res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
-                    sendResponse(res, dest);
-
+                /** op.getAmount() refers to the number of moviments */
+                String str = bank.moveList(op.getOrigin(),op.getAmount());
+                res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
+                sendResponse(res, dest);
                 break;
 
             case LEAVE:
-                    res = new Response(Type.LEAVE, op.getVMID(),
-                            op.getMsgNumber(),op.getDestination());
-                    sendResponse(res, dest);
-
+                res = new Response(Type.LEAVE, op.getVMID(), op.getMsgNumber(),op.getDestination());
+                sendResponse(res, dest);
                 break;
         }
     }

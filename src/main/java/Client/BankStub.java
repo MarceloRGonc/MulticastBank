@@ -131,7 +131,6 @@ public class BankStub implements Bank, MessageListener {
             ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
             ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
-            // Valor 0 é para ser ignorado, apenas colocado para não criar mais um tipo de mensagem
             Communication.CreateLogin r = new Communication.CreateLogin(Type.REGISTER, vmid, count, 0, password,true);
 
             int i = count++;
@@ -146,7 +145,6 @@ public class BankStub implements Bank, MessageListener {
 
             dSession.multicast(msg, new JGroupsService(), null);
 
-            // Espera resposta
             while (!clResponses.containsKey(i)) {
                 wait();
             }
@@ -313,7 +311,6 @@ public class BankStub implements Bank, MessageListener {
 
                     responses.put(r.getMsgNumber(), r);
                     notify();
-                    System.out.println("[" + r.getMsgNumber()  + "]" + "Receive response!");
                     removeWMsg(r.getMsgNumber());
                 }
             }
@@ -322,10 +319,8 @@ public class BankStub implements Bank, MessageListener {
                 CreateLogin clR = (CreateLogin) res;
 
                 if( clR.getVMID().equals(vmid) && wMsg.contains(clR.getMsgNumber()) && !clR.getControl()) {
-
                     clResponses.put(clR.getMsgNumber(), clR);
                     notify();
-                    System.out.println("[" + clR.getMsgNumber()  + "]" + "Receive response!");
                     removeWMsg(clR.getMsgNumber());
                 }
             }

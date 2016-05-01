@@ -1,7 +1,6 @@
 package Bank;
 
 import Communication.Operation;
-
 import java.io.Serializable;
 import java.util.Vector;
 
