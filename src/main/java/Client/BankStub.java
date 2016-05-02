@@ -8,7 +8,6 @@ import net.sf.jgcs.*;
 import net.sf.jgcs.jgroups.JGroupsGroup;
 import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
 import net.sf.jgcs.jgroups.JGroupsService;
-
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
@@ -50,6 +49,7 @@ public class BankStub implements Bank, MessageListener {
 
             ControlSession cs = p.openControlSession(group);
             cs.join();
+
         } catch (IOException ex) {
             ex.printStackTrace();
         }

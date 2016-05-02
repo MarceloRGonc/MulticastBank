@@ -2,7 +2,13 @@ package Client;
 
 import java.util.Random;
 
-public class GlobalTester {
+/**
+ *
+ *
+ *
+ *
+ * */
+public class SimpleTester {
         public static void main(String[] args) {
             BankStub bank = new BankStub();
 
@@ -16,7 +22,7 @@ public class GlobalTester {
 
             for (int i = 0; i < 500; i++) {
 
-                opcaoEscolhida = rand.nextInt(2) + 1;
+                opcaoEscolhida = rand.nextInt(2);
 
                 switch(opcaoEscolhida){
 
@@ -42,7 +48,6 @@ public class GlobalTester {
                         }
                         break;
                 }
-
             }
             System.out.println("Bank balance: " + bank.getBalance(r));
             System.out.println("Expected balance:: " + moves);
