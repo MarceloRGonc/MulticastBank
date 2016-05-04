@@ -375,6 +375,8 @@ public class BankImpl implements Bank, Serializable{
 
                         ps.close();
 
+                        System.out.println("Inserido");
+
                         r = true;
                     }
                 }
