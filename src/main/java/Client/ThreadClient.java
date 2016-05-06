@@ -2,6 +2,7 @@ package Client;
 
 import java.util.Random;
 
+/** Thread that simulates a client */
 public class ThreadClient implements Runnable {
     private final int accountNumber;
 
@@ -55,10 +56,10 @@ public class ThreadClient implements Runnable {
                         bank.getBalance(accountNumber);
                         break;
 
-                    /** Moviments */
+                    /** Movements */
                     case 4:
-                        int nMoviments = r.nextInt(10 - 1) + 1;
-                        bank.moveList(accountNumber, nMoviments);
+                        int nMovements = r.nextInt(10 - 1) + 1;
+                        bank.moveList(accountNumber, nMovements);
                         break;
                 }
                 long after = System.currentTimeMillis();

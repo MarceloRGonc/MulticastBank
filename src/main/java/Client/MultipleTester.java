@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
- *
+ * Tester that creates a number (ThreadNumber) of threads
+ * Each thread perform a client and does transfer, deposit and withdrawal operations
+ * At the end presents the measure of throughput, an latency
  * */
 public class MultipleTester {
-    private static int ThreadNumber = 20;
+    private static int ThreadNumber = 10;
     private static int FirstNumber;
     private static int LastNumber;
     private static int n = 0;

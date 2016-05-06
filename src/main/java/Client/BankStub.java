@@ -12,9 +12,11 @@ import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-
 import static Communication.Message.Type;
 
+/**
+ * Bank stub to be used by the client
+*/
 public class BankStub implements Bank, MessageListener {
 
     /** Identification */
@@ -55,6 +57,10 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
+    /** Get Balance
+     * @param accountId - account id
+     * @return if successful account balance, else -1
+     */
     public synchronized int getBalance(int accountId) {
         int res = -1;
         try {
@@ -90,6 +96,11 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
+    /** Deposit or Withdraw
+     * @param amount - movement value
+     * @param op - null
+     * @return if successful true, else false
+     */
     public synchronized boolean move(int amount, Operation op) {
         boolean res = false;
 
@@ -125,6 +136,10 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
+    /** Creates a new account
+     * @param password - user password
+     * @return if successful account id, else -1
+     */
     public synchronized int createAccount(String password) {
         int res = -1;
         try {
@@ -160,6 +175,11 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
+    /** Login Account
+     * @param accountId - account id
+     * @param password - user password
+     * @return if successful true, else false
+     */
     public synchronized boolean login(int accountId, String password) {
         boolean bool = false;
         try {
@@ -195,7 +215,13 @@ public class BankStub implements Bank, MessageListener {
         return bool;
     }
 
-    @Override
+    /** Transfer
+     * @param source - origin account id
+     * @param dest - destination account id
+     * @param amount - value to transfer
+     * @param o - null
+     * @return if successful true, else false
+     */
     public synchronized boolean transfer(int source,int dest, int amount, Operation o) {
         boolean res = false;
 
@@ -231,6 +257,9 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
+    /** Leave
+     * @param accountId - account id
+     */
     public synchronized void leave(int accountId) {
         try {
             ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
@@ -263,14 +292,19 @@ public class BankStub implements Bank, MessageListener {
         }
     }
 
-    public synchronized String moveList(int accountId, int nMoviments){
+    /** Get last N movements
+     * @param accountId - account id
+     * @param nMovements - number of movements to return
+     * @return made movements
+     */
+    public synchronized String moveList(int accountId, int nMovements){
         String res = "";
 
         try {
             ByteArrayOutputStream bOutput = new ByteArrayOutputStream();
             ObjectOutputStream output = new ObjectOutputStream(bOutput);
 
-            Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, accountId, nMoviments);
+            Communication.Operation r = new Communication.Operation(Type.MOVEMENTS, vmid, count, accountId, nMovements);
             int i = count++;
             addWMsg(i);
 
@@ -296,6 +330,10 @@ public class BankStub implements Bank, MessageListener {
         return res;
     }
 
+    /** Receives new message
+     * @param msg - message receive
+     * @return null
+     */
     public synchronized Object onMessage(Message msg) {
         ObjectInputStream oisHere = null;
         try {
@@ -338,11 +376,13 @@ public class BankStub implements Bank, MessageListener {
         return null;
     }
 
-    private synchronized void addWMsg(Integer msg){
+    /** Add message to the HashSet */
+    private synchronized void addWMsg(int msg){
         wMsg.add(msg);
     }
 
-    private synchronized void removeWMsg(Integer msg){
+    /** Remove message from the HashSet */
+    private synchronized void removeWMsg(int msg){
         wMsg.remove(msg);
     }
 }

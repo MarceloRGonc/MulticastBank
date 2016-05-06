@@ -29,7 +29,7 @@ public class Client {
         bwConsole.flush();
         bwConsole.write("4 - Bank balance\n");
         bwConsole.flush();
-        bwConsole.write("5 - Last moviments\n");
+        bwConsole.write("5 - Last movements\n");
         bwConsole.flush();
         bwConsole.write("0 - Shutdown\n");
         bwConsole.flush();
@@ -130,14 +130,14 @@ public class Client {
                                     break;
 
                                 case '5':
-                                    bwConsole.write("Moviments: ");
+                                    bwConsole.write("Movements: ");
                                     bwConsole.flush();
-                                    String nMoviments = brConsole.readLine();
-                                    int movimentos = Integer.parseInt(nMoviments);
+                                    String nMovements = brConsole.readLine();
+                                    int movementos = Integer.parseInt(nMovements);
 
-                                    if (movimentos > 0){
+                                    if (movementos > 0){
                                         bwConsole.write("[Response] \n");
-                                        bwConsole.write(bank.moveList(accountId, movimentos));
+                                        bwConsole.write(bank.moveList(accountId, movementos));
                                         bwConsole.flush();
                                     }
                                     else{

@@ -7,33 +7,41 @@ import java.io.Serializable;
 import java.sql.*;
 import java.util.Vector;
 
+/**
+ * Bank implementation to be used by the server
+ * */
 public class BankImpl implements Bank, Serializable{
 
-    /** Database */
+    /** Database name, identificates the server */
     private String nameDatabase;
 
     /** Connection BD */
     private static XAConnection xaconn;
     private static Connection conn;
 
-    /** Counters */
+    /** Current account number */
     private int countAccount;
     private synchronized void addAccount(){ this.countAccount++; }
     private synchronized int getCountAccount() { return this.countAccount; }
     private synchronized void setCountAccount(int c){ this.countAccount = c; }
 
-    private int countMoviment;
-    private synchronized void addMoviment(){ this.countMoviment++; }
-    private synchronized int getCountMoviment() { return this.countMoviment; }
-    private synchronized void setCountMoviment(int c){ this.countMoviment = c; }
+    /** Current movement number */
+    private int countMovement;
+    private synchronized void addMovement(){ this.countMovement++; }
+    private synchronized int getCountMovement() { return this.countMovement; }
+    private synchronized void setCountMovement(int c){ this.countMovement = c; }
 
-    /** Construtor */
+    /** Construtor
+     * @param nameDatabase - server name
+     * */
     public BankImpl(String nameDatabase){
         this.nameDatabase = nameDatabase;
         initBD();
     }
 
-    /** Create Connection, FALSE = ERROR */
+    /** Create Connection,
+     * @return false - error, true - success
+     * */
     private boolean createConnection(){
         try {
             EmbeddedXADataSource ds = new EmbeddedXADataSource();
@@ -49,7 +57,9 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Create schema DataBase, If Exists = FALSE */
+    /** Create schema DataBase,
+     * @return false - if schema exists, true - create with success
+     */
     private boolean createSchema(){
         try {
             Statement stmt = conn.createStatement();
@@ -61,7 +71,9 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Set Schema DataBase If Exists = TRUE */
+    /** Set Schema DataBase,
+     * @return true - if schema exists
+     * */
     private boolean setSchema(){
         try {
             Statement stmt = conn.createStatement();
@@ -75,7 +87,9 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Create Table Account If Exists = FALSE */
+    /** Create Table Account,
+     * @return false - if table exists, true - create with success
+     */
     private boolean createTableAccount() {
         try {
             Statement stmt = conn.createStatement();
@@ -90,11 +104,13 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Create Table Moviments If Exists = FALSE*/
-    private boolean createTableMoviments() {
+    /** Create Table Movements,
+     * @return false - if table exists, true - create with success
+     */
+    private boolean createTableMovements() {
         try {
             Statement stmt = conn.createStatement();
-            stmt.execute("CREATE TABLE MOVIMENTS (id INTEGER not NULL, " +
+            stmt.execute("CREATE TABLE MOVEMENTS (id INTEGER not NULL, " +
                     "accountid INTEGER not NULL, msg INTEGER not NULL, operation VARCHAR(40) not NULL, " +
                     "balance INTEGER not NULL, PRIMARY KEY ( id ),FOREIGN KEY (accountid) References ACCOUNTS (accountid))");
             stmt.close();
@@ -118,7 +134,7 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Init BD */
+    /** Initialize database */
     private void initBD(){
         if(createConnection() == true){
             boolean flag = false;
@@ -128,16 +144,14 @@ public class BankImpl implements Bank, Serializable{
             setSchema();
             if(!flag){
                 createTableAccount();
-                System.out.println("Created Table Account;");
-                createTableMoviments();
-                System.out.println("Created Account Moviments;");
+                createTableMovements();
             }
             getCounters();
-            System.out.println("Counter Account: " + getCountAccount());
-            System.out.println("Counter Moviment: " + getCountMoviment());
+            getCounters();
         }
     }
 
+    /** Accesses to the database add update the counters in memory */
     private void getCounters() {
         try {
             Statement stmt = conn.createStatement();
@@ -146,10 +160,10 @@ public class BankImpl implements Bank, Serializable{
             ResultSet results = stmt.executeQuery("select * from ACCOUNTS Order by accountid DESC");
 
             if(results.next()){
+                /** Set new value */
                 setCountAccount(results.getInt(1));
                 addAccount();
-            }
-            else{
+            } else{
                 setCountAccount(1);
             }
 
@@ -163,15 +177,15 @@ public class BankImpl implements Bank, Serializable{
         try {
             Statement stmt = conn.createStatement();
 
-            /** Get last moviment inserted */
-            ResultSet results = stmt.executeQuery("select * from MOVIMENTS Order by id DESC");
+            /** Get last movement inserted */
+            ResultSet results = stmt.executeQuery("select * from MOVEMENTS Order by id DESC");
 
             if(results.next()){
-                setCountMoviment(results.getInt(1));
-                addMoviment();
-            }
-            else{
-                setCountMoviment(1);
+                /** Set new value */
+                setCountMovement(results.getInt(1));
+                addMovement();
+            } else{
+                setCountMovement(1);
             }
 
             results.close();
@@ -183,11 +197,14 @@ public class BankImpl implements Bank, Serializable{
 
     }
 
-    /** Insert accounts */
-    public int createAccount(String password,int valor){
+    /** Creates a new account
+     * @param password - user password
+     * @param value - opening balance
+     * @return if successful account id, else -1
+     */
+    public int createAccount(String password, int value){
         int r = -1;
-        try
-        {
+        try {
             String sql = "Insert into ACCOUNTS(accountid,password,balance) values (?,?,?)";
 
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -196,7 +213,7 @@ public class BankImpl implements Bank, Serializable{
 
             ps.setInt(1,r);
             ps.setString(2,password);
-            ps.setInt(3,valor);
+            ps.setInt(3,value);
             ps.executeUpdate();
 
             addAccount();
@@ -209,11 +226,14 @@ public class BankImpl implements Bank, Serializable{
         return r;
     }
 
-    /** Login account */
+    /** Login Account
+     * @param accountID - account id
+     * @param password - user password
+     * @return if successful true, else false
+     */
     public boolean loginAccount(int accountID, String password){
         boolean r = false;
-        try
-        {
+        try {
             Statement stmt = conn.createStatement();
             ResultSet results = stmt.executeQuery("select * from ACCOUNTS where accountid = " + accountID);
 
@@ -225,19 +245,21 @@ public class BankImpl implements Bank, Serializable{
 
             results.close();
             stmt.close();
-        }
-        catch (SQLException sqlExcept) {
+        } catch (SQLException sqlExcept) {
             sqlExcept.printStackTrace();
         }
 
         return r;
     }
 
-    /** Deposit or Withdraw */
+    /** Deposit or Withdraw
+     * @param value - movement value
+     * @param op - operation data to perform
+     * @return if successful true, else false
+     */
     public boolean move(int value, Operation op) {
         boolean r = false;
-        try
-        {
+        try {
             Statement stmt = conn.createStatement();
 
             ResultSet result = stmt.executeQuery("select * from ACCOUNTS where accountid = " + op.getOrigin());
@@ -258,20 +280,20 @@ public class BankImpl implements Bank, Serializable{
                     }
 
                     String sqlUpdate = "update ACCOUNTS set balance = " + move + " where accountid = " +  op.getOrigin();
-                    String sqlMove = "insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
+                    String sqlMove = "insert into MOVEMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
 
                     PreparedStatement ps = conn.prepareStatement(sqlUpdate);
                     ps.executeUpdate();
 
                     ps = conn.prepareStatement(sqlMove);
-                    ps.setInt(1,getCountMoviment());
+                    ps.setInt(1,getCountMovement());
                     ps.setInt(2,op.getOrigin());
                     ps.setInt(3,op.getMsgNumber());
                     ps.setString(4,operation);
                     ps.setInt(5,move);
                     ps.executeUpdate();
 
-                    addMoviment();
+                    addMovement();
 
                     ps.close();
 
@@ -280,14 +302,17 @@ public class BankImpl implements Bank, Serializable{
             }
             result.close();
             stmt.close();
-        }
-        catch (SQLException sqlExcept) {
+        } catch (SQLException sqlExcept) {
             sqlExcept.printStackTrace();
         }
         return r;
     }
 
-    /** GetBalance */
+
+    /** Get Balance
+     * @param accountId - account id
+     * @return if successful account balance, else -1
+     */
     public int getBalance(int accountId) {
         int r = -1;
         try {
@@ -309,7 +334,13 @@ public class BankImpl implements Bank, Serializable{
         return r;
     }
 
-    /** Transfer */
+    /** Transfer
+     * @param source - origin account id
+     * @param dest - destination account id
+     * @param amount - value to transfer
+     * @param op - operation data to perform
+     * @return if successful true, else false
+     */
     public boolean transfer(int source, int dest, int amount, Operation op){
 
         boolean r = false;
@@ -340,42 +371,40 @@ public class BankImpl implements Bank, Serializable{
 
                         /** Account 1 */
                         String sqlUpdate = "update ACCOUNTS set balance = " + move + " where accountid = " +  op.getOrigin();
-                        String sqlMove = "insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
+                        String sqlMove = "insert into MOVEMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
 
                         PreparedStatement ps = conn.prepareStatement(sqlUpdate);
                         ps.executeUpdate();
 
                         ps = conn.prepareStatement(sqlMove);
-                        ps.setInt(1,getCountMoviment());
+                        ps.setInt(1,getCountMovement());
                         ps.setInt(2,op.getOrigin());
                         ps.setInt(3,op.getMsgNumber());
                         ps.setString(4,operationAccount1);
                         ps.setInt(5,move);
                         ps.executeUpdate();
 
-                        addMoviment();
+                        addMovement();
 
                         /** Account 2 */
                         sqlUpdate = "update ACCOUNTS set balance = "
                                 + balanceAccount2 + " where accountid = " +  op.getDestination();
-                        sqlMove = "insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
+                        sqlMove = "insert into MOVEMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
 
                         ps = conn.prepareStatement(sqlUpdate);
                         ps.executeUpdate();
 
                         ps = conn.prepareStatement(sqlMove);
-                        ps.setInt(1,getCountMoviment());
+                        ps.setInt(1,getCountMovement());
                         ps.setInt(2,op.getDestination());
                         ps.setInt(3,op.getMsgNumber());
                         ps.setString(4,operationAccount2);
                         ps.setInt(5,balanceAccount2);
                         ps.executeUpdate();
 
-                        addMoviment();
+                        addMovement();
 
                         ps.close();
-
-                        System.out.println("Inserido");
 
                         r = true;
                     }
@@ -391,25 +420,29 @@ public class BankImpl implements Bank, Serializable{
     }
 
 
-    /** Get last N moviments */
-    public String moveList(int accountId, int nMoviments){
+    /** Get last N movements
+     * @param accountId - account id
+     * @param nMovements - number of movements to return
+     * @return made movements
+     */
+    public String moveList(int accountId, int nMovements){
         String r = "";
         try {
             Statement stmt = conn.createStatement();
 
-            /** Get moviments from accountId */
-            ResultSet result = stmt.executeQuery("select * from MOVIMENTS where accountid = " + accountId + " order by id DESC");
+            /** Get movements from accountId */
+            ResultSet result = stmt.executeQuery("select * from MOVEMENTS where accountid = " + accountId + " order by id DESC");
 
             StringBuilder s = new StringBuilder();
-            s.append("\n--- Moviments ---\n");
+            s.append("\n--- Movements ---\n");
 
-            /** Moviments */
-            while( (nMoviments != 0) && result.next()) {
+            /** Movements */
+            while( (nMovements != 0) && result.next()) {
                 s.append("Move id: " + result.getInt(3));
                 s.append("\nOperation: " + result.getString(4));
                 s.append("\nBalance: " + result.getInt(5));
-                s.append("- - - - - - - - -\n");
-                --nMoviments;
+                s.append("\n- - - - - - - - -\n");
+                --nMovements;
             }
             s.append("-----------------\n");
             r =  s.toString();
@@ -434,22 +467,26 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Last moviment inserted */
-    public int lastMovimentInserted(){
-       if(getCountMoviment() == 1) {
+    /** Last movement inserted */
+    public int lastMovementInserted(){
+       if(getCountMovement() == 1) {
            return -1;
        }
        else {
-           return getCountMoviment() - 1;
+           return getCountMovement() - 1;
        }
     }
 
-    /** Operation realized */
-    public boolean operationRealized(int accountId, int msg){
+    /** Verifies if operation has been performed
+     * @param accountId - account id
+     * @param msgNumber - message number
+     * @return if successful true, else false
+     */
+    public boolean operationRealized(int accountId, int msgNumber){
         boolean r = false;
         try {
             Statement stmt = conn.createStatement();
-            ResultSet results = stmt.executeQuery("select * from MOVIMENTS where accountid = " + accountId + " and msg = " + msg);
+            ResultSet results = stmt.executeQuery("select * from MOVEMENTS where accountid = " + accountId + " and msg = " + msgNumber);
 
             if(results.next()){
                 r = true;
@@ -464,7 +501,11 @@ public class BankImpl implements Bank, Serializable{
         return r;
     }
 
-    /** Creates Data to send to another server */
+    /** Creates Data to send to another server
+     * @param cl - last account created
+     * @param op - last operation made
+     * @return Data object - with all the missing data
+     */
     public synchronized Data exportData(int cl, int op) {
 
         Data data = new Data();
@@ -485,15 +526,15 @@ public class BankImpl implements Bank, Serializable{
             sqlExcept.printStackTrace();
         }
 
-        /** Get Moviments */
+        /** Get Movements */
         try {
             Statement stmt = conn.createStatement();
 
-            ResultSet result = stmt.executeQuery("select * from MOVIMENTS where id > " + op);
+            ResultSet result = stmt.executeQuery("select * from MOVEMENTS where id > " + op);
 
             while (result.next()) {
                 Operation newop = new Operation(result.getInt(1), result.getInt(2), result.getInt(3), result.getString(4), result.getInt(5));
-                data.insertMoviments(newop);
+                data.insertMovements(newop);
             }
             result.close();
             stmt.close();
@@ -503,7 +544,9 @@ public class BankImpl implements Bank, Serializable{
         return data;
     }
 
-    /** Update Database with data from other server */
+    /** Update Database with data from other server
+     * @param data - Data object with all the missing data
+     */
     public synchronized void updateData(Data data){
 
         /** Accounts */
@@ -530,11 +573,11 @@ public class BankImpl implements Bank, Serializable{
             }
         }
 
-        /** Moviments */
-        Vector<Operation> moviments = data.getOperations();
+        /** Movements */
+        Vector<Operation> movements = data.getOperations();
 
-        for(Operation op : moviments){
-            sql = "Insert into MOVIMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
+        for(Operation op : movements){
+            sql = "Insert into MOVEMENTS(id,accountid,msg,operation,balance) values (?,?,?,?,?)";
             try {
                 doUpdate(op.getBalance(), op.getAccountid());
                 ps = conn.prepareStatement(sql);
@@ -544,7 +587,7 @@ public class BankImpl implements Bank, Serializable{
                 ps.setString(4,op.getOperation());
                 ps.setInt(5,op.getBalance());
                 ps.executeUpdate();
-                addMoviment();
+                addMovement();
             }
             catch (SQLException sqlExcept){
                 sqlExcept.printStackTrace();
@@ -552,7 +595,11 @@ public class BankImpl implements Bank, Serializable{
         }
     }
 
-    /** Update de balance from the account */
+    /** Update de balance from the account
+     * @param bal - new balance
+     * @param id - account id
+     * @throws SQLException
+     */
     private void doUpdate(int bal, int id) throws SQLException {
         Statement stmt = conn.createStatement();
         String sqlUpdate = "UPDATE ACCOUNTS set balance = " + bal + " where accountid = " +  id;

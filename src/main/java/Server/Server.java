@@ -15,6 +15,7 @@ import java.rmi.dgc.VMID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import static Communication.Message.Type;
 
+/** Bank Server implementation */
 public class Server implements MessageListener, MembershipListener {
 
     /** Server identification */
@@ -53,7 +54,9 @@ public class Server implements MessageListener, MembershipListener {
             this.mSession = (MembershipSession) p.openControlSession(group);
             this.mSession.setMembershipListener(this);
             ControlSession cs = this.p.openControlSession(group);
+
             cs.join();
+
         } catch (GroupException ex) {
             ex.printStackTrace();
         }
@@ -64,8 +67,6 @@ public class Server implements MessageListener, MembershipListener {
             try {
                 /** Args[0] name of the server and corresponding data bases */
                 bank = new BankImpl(args[0]);
-
-                System.out.println("[Server] Server started");
 
                 JGroupsProtocolFactory pf = new JGroupsProtocolFactory();
                 group = new JGroupsGroup("Bank");
@@ -82,7 +83,11 @@ public class Server implements MessageListener, MembershipListener {
         }
     }
 
-    /** Send Response to the destination */
+    /** Send Response to the destination
+     * @param obj - response
+     * @param dest - address of destination
+     * @throws IOException
+     */
     private synchronized void sendResponse(Object obj, SocketAddress dest) throws IOException {
         ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
         ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
@@ -92,22 +97,19 @@ public class Server implements MessageListener, MembershipListener {
         Message toSend = dSession.createMessage();
         toSend.setPayload(data);
 
-        String vmid;
-        int msgNumber;
-
-        if(obj instanceof Communication.Response) {
-            vmid = ((Response) obj).getVMID();
-            msgNumber = ((Response) obj).getMsgNumber();
-            System.out.println("[" + vmid.hashCode() + " - " + msgNumber + "] "
-                    + "Sent response! Account: " + ((Response) obj).getAccountId() +
-                    " Balance: " + bank.getBalance(((Response) obj).getAccountId()));
-        } else if(obj instanceof Communication.StateTransfer) {
-            System.out.println("[StateTransfer] Sent current state!");
+        if(obj instanceof Communication.StateTransfer) {
+            int cl = bank.lastAccountInserted();
+            int op = bank.lastMovementInserted();
+            System.out.println("[StateTransfer] Sent current state! Last added account: " + cl + "; Last performed movement: " + op);
         }
 
         dSession.multicast(toSend, new JGroupsService(), null, new PointToPoint(dest));
     }
 
+    /** Receives new message
+     * @param msg - message receive
+     * @return null
+     */
     public synchronized Object onMessage(Message msg) {
         try {
             ObjectInputStream oInput;
@@ -159,7 +161,7 @@ public class Server implements MessageListener, MembershipListener {
                             sendResponse(opt, msg.getSenderAddress());
                         } else if(state == 1){
                             /** Saving messages to realized later */
-                            System.out.println("Saving messages");
+                            System.out.println("[StateTransfer] Saving messages");
                             keep = true;
                         }
                         break;
@@ -170,6 +172,9 @@ public class Server implements MessageListener, MembershipListener {
 
                             /** Update data */
                             bank.updateData(data);
+                            int cl = bank.lastAccountInserted();
+                            int lm = bank.lastMovementInserted();
+                            System.out.println("[StateTransfer] State transferred! Last added account: " + cl + "; Last performed movement: " + lm);
 
                             /** Array sorted in arrival order */
                             boolean flag = true;
@@ -183,14 +188,14 @@ public class Server implements MessageListener, MembershipListener {
                                     boolean bool = bank.operationRealized(op.getOrigin(), op.getMsgNumber());
 
                                     if (bool) {
-                                        System.out.println("Repeated message!");
+                                        System.out.println("[StateTransfer] Discard Repeated message!");
                                     } else {
                                         doOperations(op, msg.getSenderAddress());
                                     }
                                 }
                             }
                             keep = false;
-                            System.out.print("Status updated");
+                            System.out.println("[StateTransfer] Status updated!");
                             this.state = 2;
                         }
                         break;
@@ -204,17 +209,20 @@ public class Server implements MessageListener, MembershipListener {
         return null;
     }
 
+    /** Membership change
+     * If provoked the change ask state to the other members
+     * If there is no members, my state is correct
+     */
     public synchronized void onMembershipChange() {
         try {
             /** Request state */
             if( state == 1 && (this.mSession.getMembership().getMembershipList().size() != 1)){
 
                 int cl = bank.lastAccountInserted();
-                int op = bank.lastMovimentInserted();
+                int op = bank.lastMovementInserted();
 
-                /** Send to the froup the current state asking for the new */
+                /** Send to the group the current state asking for the new */
                 StateTransfer res = new StateTransfer(Type.ASKSTATE, vmid,cl,op);
-                System.out.print("Last Account: " + cl + "; Last Moviment: " + op + ";\n");
 
                 ByteArrayOutputStream bOuput = new ByteArrayOutputStream();
                 ObjectOutputStream oosHere = new ObjectOutputStream(bOuput);
@@ -224,13 +232,28 @@ public class Server implements MessageListener, MembershipListener {
                 Message toSend = dSession.createMessage();
                 toSend.setPayload(data);
 
-                System.out.println("[ - " + res.getVMID()  + "] " + "Ask State!");
+                if(cl == -1){
+                    System.out.println("[Server] Ask State! The server hasn't any created account.");
+                }
+                else {
+                    System.out.println("[Server] Ask State! Last added account: " + cl + "; Last performed movement: " + op + ";");
+                }
 
                 dSession.multicast(toSend, new JGroupsService(), null);
 
             } else if(this.mSession.getMembership().getMembershipList().size() == 1){
                 state = 2;
                 keep = false;
+
+                int cl = bank.lastAccountInserted();
+                int op = bank.lastMovementInserted();
+
+                if(cl == -1){
+                    System.out.println("[Server] Server started! The server hasn't any created account.");
+                }
+                else {
+                    System.out.println("[Server] Membership change! Last added account: " + cl + "; Last performed movement: " + op + ";");
+                }
             }
         } catch (InvalidStateException e) {
             e.printStackTrace();
@@ -246,7 +269,11 @@ public class Server implements MessageListener, MembershipListener {
         System.exit(0);
     }
 
-    /** Performs operation and sends response to the destination */
+    /** Performs operation and sends response to the destination
+     * @param op - operation to realize
+     * @param dest - address destination
+     * @throws IOException
+     */
     private synchronized void doOperations(Operation op, SocketAddress dest) throws IOException{
         Response res;
         boolean result;
@@ -267,11 +294,12 @@ public class Server implements MessageListener, MembershipListener {
                 res = new Response(Type.BALANCE, bank.getBalance(op.getOrigin()), op.getVMID(), op.getMsgNumber(), op.getOrigin());
                 sendResponse(res, dest);
                 System.out.println("[" + vmid.hashCode() + " - " + res.getMsgNumber() + "] "
-                        + "Sent response! Account Balance: " + bank.getBalance(res.getAccountId()));
+                    + "Sent response! Account: " + res.getAccountId() +
+                    " Balance: " + bank.getBalance(res.getAccountId()));
                 break;
 
             case MOVEMENTS:
-                /** op.getAmount() refers to the number of moviments */
+                /** op.getAmount() refers to the number of movements */
                 String str = bank.moveList(op.getOrigin(),op.getAmount());
                 res = new Response(Type.MOVEMENTS,op.getVMID(), op.getMsgNumber(),op.getOrigin(),str);
                 sendResponse(res, dest);

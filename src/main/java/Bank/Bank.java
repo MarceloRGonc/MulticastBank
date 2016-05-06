@@ -8,7 +8,7 @@ public interface Bank {
 
     boolean move(int value, Operation op);
 
-    String moveList(int accountId, int nMoviments);
+    String moveList(int accountId, int nMovements);
 
     boolean transfer(int source, int dest, int amount, Operation op);
 
