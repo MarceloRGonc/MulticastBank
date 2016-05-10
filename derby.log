@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Fri May 06 17:49:24 WEST 2016:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-86f9-4703-000006df9828 
-on database directory /Users/MGonc/RepositorioGIT/MulticastBank/Braga with class loader sun.misc.Launcher$AppClassLoader@266474c2 
+Tue May 10 12:10:22 WEST 2016:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-9a5c-53f8-0000081c28a8 
+on database directory /Users/MGonc/RepositorioGIT/MulticastBank/arg2 with class loader java.net.URLClassLoader@42104b4 
 Loaded from file:/Users/MGonc/.m2/repository/org/apache/derby/derby/10.12.1.1/derby-10.12.1.1.jar
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_74-b02

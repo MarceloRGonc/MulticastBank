@@ -2,9 +2,11 @@ package Server;
 
 import Bank.BankImpl;
 import Bank.Data;
-import Communication.*;
+import Communication.CreateLogin;
+import Communication.Operation;
+import Communication.Response;
+import Communication.StateTransfer;
 import net.sf.jgcs.*;
-import net.sf.jgcs.Message;
 import net.sf.jgcs.annotation.PointToPoint;
 import net.sf.jgcs.jgroups.JGroupsGroup;
 import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
@@ -13,6 +15,7 @@ import java.io.*;
 import java.net.SocketAddress;
 import java.rmi.dgc.VMID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import static Communication.Message.Type;
 
 /** Bank Server implementation */

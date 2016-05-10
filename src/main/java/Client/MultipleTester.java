@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * At the end presents the measure of throughput, an latency
  * */
 public class MultipleTester {
-    private static int ThreadNumber = 10;
+    private static int ThreadNumber;
     private static int FirstNumber;
     private static int LastNumber;
     private static int n = 0;
@@ -43,7 +43,7 @@ public class MultipleTester {
 	}
 
 	public static void main(String[] args) throws Exception {
-
+        ThreadNumber = Integer.valueOf(args[0]);
         accounts = new ConcurrentHashMap<>();
         BankStub bank = new BankStub();
         ArrayList<Thread> threads = new ArrayList<>();

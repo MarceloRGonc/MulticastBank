@@ -8,10 +8,12 @@ import net.sf.jgcs.*;
 import net.sf.jgcs.jgroups.JGroupsGroup;
 import net.sf.jgcs.jgroups.JGroupsProtocolFactory;
 import net.sf.jgcs.jgroups.JGroupsService;
+
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+
 import static Communication.Message.Type;
 
 /**
