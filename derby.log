@@ -1,13 +1,13 @@
 ----------------------------------------------------------------
-Tue May 10 12:10:22 WEST 2016:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-9a5c-53f8-0000081c28a8 
-on database directory /Users/MGonc/RepositorioGIT/MulticastBank/arg2 with class loader java.net.URLClassLoader@42104b4 
-Loaded from file:/Users/MGonc/.m2/repository/org/apache/derby/derby/10.12.1.1/derby-10.12.1.1.jar
+Thu May 12 23:31:45 WEST 2016:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0154-a718-de85-000006ad7f70 
+on database directory /home/brunorebelo/IdeaProjects/MulticastBank/Braga with class loader sun.misc.Launcher$AppClassLoader@45ee12a7 
+Loaded from file:/home/brunorebelo/.m2/repository/org/apache/derby/derby/10.12.1.1/derby-10.12.1.1.jar
 java.vendor=Oracle Corporation
-java.runtime.version=1.8.0_74-b02
-user.dir=/Users/MGonc/RepositorioGIT/MulticastBank
-os.name=Mac OS X
-os.arch=x86_64
-os.version=10.11.4
+java.runtime.version=1.8.0_77-b03
+user.dir=/home/brunorebelo/IdeaProjects/MulticastBank
+os.name=Linux
+os.arch=amd64
+os.version=4.2.0-35-generic
 derby.system.home=null
 Database Class Loader started - derby.database.classpath=''

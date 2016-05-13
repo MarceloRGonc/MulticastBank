@@ -43,7 +43,7 @@ public class MultipleTester {
 	}
 
 	public static void main(String[] args) throws Exception {
-        ThreadNumber = Integer.valueOf(args[0]);
+        ThreadNumber = 12;//Integer.valueOf(args[0]);
         accounts = new ConcurrentHashMap<>();
         BankStub bank = new BankStub();
         ArrayList<Thread> threads = new ArrayList<>();

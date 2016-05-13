@@ -21,7 +21,7 @@ public class ThreadClient implements Runnable {
 
             Thread.sleep(100);
 
-            while(true){
+            for(int i = 0; i < 500 ; i++){
 
                 long before = System.currentTimeMillis();
 
